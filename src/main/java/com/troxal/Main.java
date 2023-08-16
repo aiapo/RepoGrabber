@@ -13,15 +13,13 @@ public class Main {
         String isPublic = scn.next();
         System.out.println("Do you want archived repos? (y/n): ");
         String isArchive = scn.next();
-        System.out.println("What from what date do you want there to be at least one commit (ex: >2010-01-01): ");
-        String pushDate = scn.next();
-        System.out.println("What languages do you want to grab? (comma seperated; ex: java,python)");
+        System.out.println("At least how many followers on project: ");
+        Integer followers = Integer.valueOf(scn.next());
+        System.out.println("What language do you want to grab? (ex: java)");
         String languages = scn.next();
-        System.out.println("How many repos/page do you want to return (ex: 1-100): ");
-        Integer amount = Integer.valueOf(scn.next());
 
         System.out.println("\n** Grabbing repos!");
-        RepoGrab rg = new RepoGrab(isArchive,isPublic,pushDate,null,languages,amount);
+        RepoGrab rg = new RepoGrab(isArchive,isPublic,followers,languages);
         System.out.println("\n** Grabbed repos!");
 
         while(continueA==true){

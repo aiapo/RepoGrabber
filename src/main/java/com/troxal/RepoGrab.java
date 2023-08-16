@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.List;
@@ -16,18 +17,19 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
-    private String variables,pushed,created,languages,isArchived,isPublic;
-    private Integer amountReturned;
+    private String variables,languages,isArchived,isPublic;
+    private Integer amountReturned,followers;
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-06-01");
+
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
-    public RepoGrab(String isArchived,String isPublic,String pushed,String created,String languages,Integer amountReturned) {
+    public RepoGrab(String isArchived,String isPublic,Integer followers,String languages) {
         this.isArchived=isArchived;
         this.isPublic=isPublic;
-        this.pushed=pushed;
-        this.created=created;
+        this.followers=followers;
         this.languages=languages;
-        this.amountReturned=amountReturned;
+        this.amountReturned=50;
 
         jsonToRepoData(null);
     }
@@ -43,13 +45,13 @@ public class RepoGrab{
             sb.append(" archived:true");
         else
             sb.append(" archived:false");
-        if(pushed!=null)
-            sb.append(" pushed:"+pushed);
-        if(created!=null)
-            sb.append(" created:"+created);
+        if(followers!=null)
+            sb.append(" followers:>="+followers);
         if(languages!=null) {
-            sb.append(" languages:"+languages);
+            sb.append(" language:"+languages);
         }
+        sb.append(" pushed:");
+        sb.append(beginningDate+".."+endingDate);
         if(amountReturned!=null)
             sb.append("\",\"amountReturned\":"+amountReturned);
         if(endCursor!=null)
@@ -83,7 +85,14 @@ public class RepoGrab{
             }
         }
         while (JSONResponse.getSearch().getPageInfo().gethasNextPage()&&JSONResponse.getRateLimit().getRemaining()>100){
+            System.out.println("Next cursor:"+JSONResponse.getSearch().getPageInfo().getEndCursor()+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(JSONResponse.getSearch().getPageInfo().getEndCursor());
+        }
+        while (JSONResponse.getRateLimit().getRemaining()>100) {
+            beginningDate = endingDate;
+            endingDate = endingDate.plusMonths(6);
+            System.out.println("New date range: "+beginningDate+" to "+endingDate);
+            jsonToRepoData(null);
         }
     }
 

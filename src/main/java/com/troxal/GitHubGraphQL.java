@@ -7,12 +7,22 @@ import kong.unirest.Unirest;
 
 import com.fasterxml.jackson.core.*;
 
+import java.util.concurrent.TimeUnit;
+
 public class GitHubGraphQL {
     public static String post(String authToken,String query,String variables) {
         HttpResponse<JsonNode> httpResponse = Unirest.post("https://api.github.com/graphql")
                 .header("Authorization", "Bearer " + authToken)
                 .body("{\"query\": \""+query+"\","+"\"variables\": "+variables+"}")
                 .asJson();
+
+        try {
+            TimeUnit.SECONDS.sleep(10);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        //System.out.println(httpResponse.getHeaders().toString());
 
         return httpResponse.getBody().getObject().toString(4);
     }
