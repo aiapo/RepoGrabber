@@ -2,35 +2,33 @@ package com.troxal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Scanner;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        Boolean iPub=false,iArch=false;
 
-        String authToken = getConfig.getKey();
+        System.out.println("-- Welcome to RepoGrabber! --\n");
+        Scanner scn = new Scanner(System.in);
+        System.out.println("Do you want only public repos? (y/n): ");
+        String isPublic = scn.next();
+        if(isPublic.toLowerCase()=="y")
+            iPub = true;
+        System.out.println("Do you want archived repos? (y/n): ");
+        String isArchive = scn.next();
+        if(isArchive.toLowerCase()=="y")
+            iArch = true;
+        System.out.println("What from what date do you want there to be at least one commit (ex: >2010-01-01): ");
+        String pushDate = scn.next();
+        System.out.println("What languages do you want to grab? (comma seperated; ex: java,python)");
+        String languages = scn.next();
+        System.out.println("How many repos/page do you want to return (ex: 1-100): ");
+        Integer amount = Integer.valueOf(scn.next());
 
-        String variables = "{\"queryString\": \"is:public archived:false pushed:>2010-01-01 languages:java\",\"amountReturned\": 5}";
-
-        RepoGrab rg = new RepoGrab(authToken,variables);
+        RepoGrab rg = new RepoGrab(iArch,iPub,pushDate,null,languages,amount);
 
         System.out.println(rg.getRepos());
-        /*for(int i=0;i<rg.getRepos().size();i++){
-            try{
-                Git.cloneRepository()
-                        .setURI(rg.getRepo(i).getUrl()+".git")
-                        .setDirectory(new File("repos/"+rg.getRepo(i).getName()))
-                        .call();
-            } catch (InvalidRemoteException e) {
-                throw new RuntimeException(e);
-            } catch (TransportException e) {
-                throw new RuntimeException(e);
-            } catch (GitAPIException e) {
-                throw new RuntimeException(e);
-            }
-        }*/
+
     }
 }

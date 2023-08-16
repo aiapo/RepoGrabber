@@ -3,20 +3,37 @@ package com.troxal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.File;
 import java.util.List;
-import java.util.Map;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
-    static private String authToken;
+    static private String authToken = getConfig.getKey();
     private String variables;
-    Data JSONResponse = null;
+    private Data JSONResponse = null;
+    private List<RepoData> repos = new ArrayList<>();
 
-    List<RepoData> repos = new ArrayList<>();
+    public RepoGrab(Boolean isArchived,Boolean isPublic,String pushed,String created,String languages,Integer amountReturned) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"queryString\": \"");
+        if(isPublic)
+            sb.append("is:public");
+        if(isArchived)
+            sb.append(" archived:false");
+        if(pushed!=null)
+            sb.append(" pushed:"+pushed);
+        if(created!=null)
+            sb.append(" created:"+created);
+        if(languages!=null) {
+            sb.append(" languages:"+languages);
+        }
+        if(amountReturned!=null)
+            sb.append("\",\"amountReturned\":"+amountReturned+"}");
 
-    public RepoGrab(String authToken,String variables) {
-        this.authToken = authToken;
-        this.variables = variables;
+        this.variables = sb.toString();
 
         queryData();
         jsonToRepoData();
@@ -33,34 +50,56 @@ public class RepoGrab{
         }
     }
 
-    private Data getData(){
-        return JSONResponse;
+    private void jsonToRepoData(){
+        for(int i=0;i<JSONResponse.getSearch().getEdges().size();i++){
+            Node tempRepo = JSONResponse.getSearch().getEdges().get(i).getNode();
+            List<Language> languages = new ArrayList<>();
+            for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
+                languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+            }
+            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),languages));
+        }
+    }
+
+    private List<RepoData> getData(){
+        return repos;
     }
 
     public Integer getAPICallsLeft(){
-        return getData().getRateLimit().getRemaining();
+        return JSONResponse.getRateLimit().getRemaining();
     }
 
     public Integer getTotalRepoCount(){
-        return getData().getSearch().getRepositoryCount();
+        return JSONResponse.getSearch().getRepositoryCount();
     }
 
     public List<RepoData> getRepos(){
-        return repos;
+        return getData();
     }
 
     public RepoData getRepo(Integer id){
         return getRepos().get(id);
     }
 
-    private void jsonToRepoData(){
-        for(int i=0;i<getData().getSearch().getEdges().size();i++){
-            Node tempRepo = getData().getSearch().getEdges().get(i).getNode();
-            List<Language> languages = new ArrayList<>();
-            for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
-                languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
-            }
-            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),languages));
+    private boolean cloneRepo(String url,String name){
+        try{
+            Git.cloneRepository()
+                    .setURI(url+".git")
+                    .setDirectory(new File("repos/"+name))
+                    .call();
+            return true;
+        } catch (InvalidRemoteException e) {
+            throw new RuntimeException(e);
+        } catch (TransportException e) {
+            throw new RuntimeException(e);
+        } catch (GitAPIException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void cloneRepos(){
+        for(int i=0;i<getRepos().size();i++) {
+
         }
     }
 
