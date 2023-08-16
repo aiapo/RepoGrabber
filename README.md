@@ -14,10 +14,10 @@ Example:
   * Archive status
 * Clones repos
 * Lists repos
+* Output to CSV
 
 ## Planned:
 * Maybe a GUI
-* Output to CSV
 * Use *Specified Language Bytes/Total Bytes* to determine if a repo should be cloned
 * Pagination (priority!)
 * Cleaner code
