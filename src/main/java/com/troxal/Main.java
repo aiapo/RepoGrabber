@@ -17,7 +17,8 @@ public class Main {
 
         RepoGrab rg = new RepoGrab(authToken,variables);
 
-        for(int i=0;i<rg.getRepos().size();i++){
+        System.out.println(rg.getRepos());
+        /*for(int i=0;i<rg.getRepos().size();i++){
             try{
                 Git.cloneRepository()
                         .setURI(rg.getRepo(i).getUrl()+".git")
@@ -30,6 +31,6 @@ public class Main {
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
-        }
+        }*/
     }
 }

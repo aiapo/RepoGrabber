@@ -2,20 +2,25 @@ package com.troxal;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RepoGrab{
     static private String authToken;
     private String variables;
     Data JSONResponse = null;
 
+    List<RepoData> repos = new ArrayList<>();
+
     public RepoGrab(String authToken,String variables) {
         this.authToken = authToken;
         this.variables = variables;
 
         queryData();
+        jsonToRepoData();
     }
-
 
     private void queryData(){
         GitHubGraphQL api = new GitHubGraphQL();
@@ -40,12 +45,23 @@ public class RepoGrab{
         return getData().getSearch().getRepositoryCount();
     }
 
-    public List<Edge> getRepos(){
-        return getData().getSearch().getEdges();
+    public List<RepoData> getRepos(){
+        return repos;
     }
 
-    public Node getRepo(Integer id){
-        return getRepos().get(id).getNode();
+    public RepoData getRepo(Integer id){
+        return getRepos().get(id);
+    }
+
+    private void jsonToRepoData(){
+        for(int i=0;i<getData().getSearch().getEdges().size();i++){
+            Node tempRepo = getData().getSearch().getEdges().get(i).getNode();
+            List<Language> languages = new ArrayList<>();
+            for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
+                languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+            }
+            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),languages));
+        }
     }
 
 }
