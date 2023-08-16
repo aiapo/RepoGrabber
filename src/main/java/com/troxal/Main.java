@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Boolean iPub=false,iArch=false;
+        Boolean iPub=false,iArch=false,continueA=true;
 
         System.out.println("-- Welcome to RepoGrabber! --\n");
         Scanner scn = new Scanner(System.in);
@@ -26,9 +26,34 @@ public class Main {
         System.out.println("How many repos/page do you want to return (ex: 1-100): ");
         Integer amount = Integer.valueOf(scn.next());
 
+        System.out.println("\n** Grabbing repos!");
         RepoGrab rg = new RepoGrab(iArch,iPub,pushDate,null,languages,amount);
+        System.out.println("\n** Grabbed repos!");
 
-        System.out.println(rg.getRepos());
+        while(continueA==true){
+            Integer menuChoice = 0;
+            System.out.println("** Menu: **" +
+                    "\n 1. Print all repos" +
+                    "\n 2. Clone all repos"+
+                    "\n 3. Export to CSV"+
+                    "\n 4. Exit\n");
+            System.out.println("Choice: ");
+            menuChoice = Integer.valueOf(scn.next());
+            switch(menuChoice){
+                case 1:
+                    System.out.println(rg.getRepos());
+                    break;
+                case 2:
+                    rg.cloneRepos();
+                    break;
+                case 3:
+                    System.out.println("Not implemented yet.");
+                    break;
+                case 4:
+                    continueA=false;
+                    break;
+            }
+        }
 
     }
 }
