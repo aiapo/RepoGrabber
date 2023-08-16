@@ -1,12 +1,10 @@
 package com.troxal;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Scanner;
 
 
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Boolean iPub=false,iArch=false,continueA=true;
 
         System.out.println("-- Welcome to RepoGrabber! --\n");
@@ -47,7 +45,7 @@ public class Main {
                     rg.cloneRepos();
                     break;
                 case 3:
-                    System.out.println("Not implemented yet.");
+                    rg.createCSV();
                     break;
                 case 4:
                     continueA=false;

@@ -2,9 +2,13 @@ package com.troxal;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.List;
+
+import com.opencsv.CSVWriter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -104,6 +108,28 @@ public class RepoGrab{
             System.out.println("** Cloning "+getRepo(i).getName());
             if(cloneRepo(getRepo(i).getUrl(),getRepo(i).getName()))
                 System.out.println("** Clone successful");
+        }
+    }
+
+    public void createCSV(){
+        File file = new File("Repos.csv");
+        try
+        {
+            CSVWriter writer = new CSVWriter(new FileWriter(file));
+
+            String[] headerTxt = {"Github Link", "Repository", "Community", "Size"};
+            writer.writeNext(headerTxt);
+
+            for(int i=0;i<repos.size();i++){
+                String tempLine[] = new String[]{getRepo(i).getUrl(),getRepo(i).getName(), String.valueOf(getRepo(i).getUsers()), String.valueOf(getRepo(i).getTotalSize())};
+                writer.writeNext(tempLine);
+            }
+
+            writer.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
     }
 
