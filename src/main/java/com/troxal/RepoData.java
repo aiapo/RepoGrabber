@@ -5,10 +5,10 @@ import java.util.List;
 
 public class RepoData {
     private String id,name,url,creationDate;
-    private Integer users,totalSize;
+    private Integer users,totalSize,totalCommits;
     private List<Language> languages = new ArrayList<>();
 
-    public RepoData(String id, String name, String url, String creationDate, Integer users, Integer totalSize, List<Language> languages){
+    public RepoData(String id, String name, String url, String creationDate, Integer users, Integer totalSize, Integer totalCommits, List<Language> languages){
         setId(id);
         setName(name);
         setUrl(url);
@@ -16,6 +16,7 @@ public class RepoData {
         setUsers(users);
         setTotalSize(totalSize);
         setLanguages(languages);
+        setTotalCommits(totalCommits);
     }
 
     public void setId(String id){
@@ -54,6 +55,12 @@ public class RepoData {
     public Integer getTotalSize(){
         return totalSize;
     }
+    public void setTotalCommits(Integer totalCommits){
+        this.totalCommits=totalCommits;
+    }
+    public Integer getTotalCommits(){
+        return totalCommits;
+    }
     public void setLanguages(List<Language> languages){
         this.languages=languages;
     }
@@ -82,6 +89,9 @@ public class RepoData {
         sb.append('\n');
         sb.append("Total Size: ");
         sb.append(getTotalSize());
+        sb.append('\n');
+        sb.append("Total Commits: ");
+        sb.append(getTotalCommits());
         sb.append('\n');
         sb.append("Languages:");
         for (int i = 0; i < languages.size(); i++) {

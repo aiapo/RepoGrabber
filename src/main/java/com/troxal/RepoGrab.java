@@ -61,7 +61,7 @@ public class RepoGrab{
             for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
                 languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
             }
-            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),languages));
+            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount(),languages));
         }
     }
 
