@@ -117,11 +117,19 @@ public class RepoGrab{
         {
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
-            String[] headerTxt = {"Github Link", "Repository", "Community", "Size"};
+            String[] headerTxt = {"Github ID","Repository Name","Github Link","Creation Date","Community","Total Size","Total Commits"};
             writer.writeNext(headerTxt);
 
             for(int i=0;i<repos.size();i++){
-                String tempLine[] = new String[]{getRepo(i).getUrl(),getRepo(i).getName(), String.valueOf(getRepo(i).getUsers()), String.valueOf(getRepo(i).getTotalSize())};
+                String tempLine[] = new String[]{
+                        getRepo(i).getId(),
+                        getRepo(i).getName(),
+                        getRepo(i).getUrl(),
+                        getRepo(i).getCreationDate(),
+                        String.valueOf(getRepo(i).getUsers()),
+                        String.valueOf(getRepo(i).getTotalSize()),
+                        String.valueOf(getRepo(i).getTotalCommits())
+                };
                 writer.writeNext(tempLine);
             }
 
