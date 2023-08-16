@@ -6,16 +6,19 @@ Example:
 - Clone all Java based repos that were committed to in the last ten years that have at least five users active on the project.
 
 ## Current:
-* Clones 5 Java repos that have been committed to since 2010
-
-## Planned:
-* Either a GUI or CLI to choose:
+* CLI to repos based on:
   * Language(s)
   * Publish dates
   * Push activity
   * Private status
   * Archive status
+* Clones repos
+* Lists repos
+
+## Planned:
+* Maybe a GUI
 * Output to CSV
 * Use *Specified Language Bytes/Total Bytes* to determine if a repo should be cloned
+* Pagination (priority!)
 * Cleaner code
 * and more!
