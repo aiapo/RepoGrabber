@@ -16,16 +16,31 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
-    private String variables;
+    private String variables,pushed,created,languages;
+    private Boolean isArchived,isPublic;
+    private Integer amountReturned;
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
     public RepoGrab(Boolean isArchived,Boolean isPublic,String pushed,String created,String languages,Integer amountReturned) {
+        this.isArchived=isArchived;
+        this.isPublic=isPublic;
+        this.pushed=pushed;
+        this.created=created;
+        this.languages=languages;
+        this.amountReturned=amountReturned;
+
+        jsonToRepoData(null);
+    }
+
+    private void queryData(String endCursor){
+        GitHubGraphQL api = new GitHubGraphQL();
+
         StringBuilder sb = new StringBuilder();
         sb.append("{\"queryString\": \"");
         if(isPublic)
             sb.append("is:public");
-        if(isArchived)
+        if(!isArchived)
             sb.append(" archived:false");
         if(pushed!=null)
             sb.append(" pushed:"+pushed);
@@ -35,33 +50,39 @@ public class RepoGrab{
             sb.append(" languages:"+languages);
         }
         if(amountReturned!=null)
-            sb.append("\",\"amountReturned\":"+amountReturned+"}");
+            sb.append("\",\"amountReturned\":"+amountReturned);
+        if(endCursor!=null)
+            sb.append(",\"cursorValue\":\""+endCursor+"\"}");
+        else
+            sb.append(",\"cursorValue\":"+null+"}");
+        variables = sb.toString();
 
-        this.variables = sb.toString();
-
-        queryData();
-        jsonToRepoData();
-    }
-
-    private void queryData(){
-        GitHubGraphQL api = new GitHubGraphQL();
-        String query = "query listRepos($queryString: String!,$amountReturned: Int!) { rateLimit { cost remaining resetAt } search(query: $queryString, type: REPOSITORY, first: $amountReturned) { repositoryCount pageInfo { endCursor startCursor } edges { node { ... on Repository { id name createdAt isArchived isPrivate url assignableUsers { totalCount } languages(first: 3, orderBy: {field: SIZE, direction: DESC}) { edges { size node { name } } totalSize } defaultBranchRef { target { ... on Commit { history { totalCount } } } } } } } } }";
-
+        String query = "query listRepos($queryString: String!,$amountReturned: Int!,$cursorValue: String) { rateLimit { cost remaining resetAt } search(query: $queryString, type: REPOSITORY, first: $amountReturned after:$cursorValue) { repositoryCount pageInfo { endCursor hasNextPage } edges { node { ... on Repository { id name createdAt isArchived isPrivate url assignableUsers { totalCount } languages(first: 3, orderBy: {field: SIZE, direction: DESC}) { edges { size node { name } } totalSize } defaultBranchRef { target { ... on Commit { history { totalCount } } } } } } } } }";
         try{
+            System.out.println(variables);
             JSONResponse = api.getData(authToken,query,variables);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void jsonToRepoData(){
+    private void jsonToRepoData(String endCursor){
+        queryData(endCursor);
         for(int i=0;i<JSONResponse.getSearch().getEdges().size();i++){
-            Node tempRepo = JSONResponse.getSearch().getEdges().get(i).getNode();
-            List<Language> languages = new ArrayList<>();
-            for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
-                languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+            if(JSONResponse.getSearch().getEdges().get(i).getNode().getDefaultBranchRef()!=null){
+                Node tempRepo = JSONResponse.getSearch().getEdges().get(i).getNode();
+                List<Language> languages = new ArrayList<>();
+                for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
+                    languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+                }
+                System.out.println("** Added "+tempRepo.getName());
+                repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount(),languages));
+            }else{
+                System.out.println("*** Skipped repo...");
             }
-            repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount(),languages));
+        }
+        while (JSONResponse.getSearch().getPageInfo().gethasNextPage()&&JSONResponse.getRateLimit().getRemaining()>100){
+            jsonToRepoData(JSONResponse.getSearch().getPageInfo().getEndCursor());
         }
     }
 

@@ -16,8 +16,8 @@ public class PageInfo {
 
     @JsonProperty("endCursor")
     private String endCursor;
-    @JsonProperty("startCursor")
-    private String startCursor;
+    @JsonProperty("hasNextPage")
+    private Boolean hasNextPage;
 
     @JsonProperty("endCursor")
     public String getEndCursor() {
@@ -29,14 +29,14 @@ public class PageInfo {
         this.endCursor = endCursor;
     }
 
-    @JsonProperty("startCursor")
-    public String getStartCursor() {
-        return startCursor;
+    @JsonProperty("hasNextPage")
+    public Boolean gethasNextPage() {
+        return hasNextPage;
     }
 
-    @JsonProperty("startCursor")
-    public void setStartCursor(String startCursor) {
-        this.startCursor = startCursor;
+    @JsonProperty("hasNextPage")
+    public void setHasNextPage(Boolean hasNextPage) {
+        this.hasNextPage = hasNextPage;
     }
 
     @Override
@@ -47,9 +47,9 @@ public class PageInfo {
         sb.append('=');
         sb.append(((this.endCursor == null)?"<null>":this.endCursor));
         sb.append(',');
-        sb.append("startCursor");
+        sb.append("hasNextPage");
         sb.append('=');
-        sb.append(((this.startCursor == null)?"<null>":this.startCursor));
+        sb.append(((this.hasNextPage == null)?"<null>":this.hasNextPage));
         sb.append(',');
         if (sb.charAt((sb.length()- 1)) == ',') {
             sb.setCharAt((sb.length()- 1), ']');
