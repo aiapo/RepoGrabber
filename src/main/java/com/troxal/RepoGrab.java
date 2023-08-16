@@ -83,9 +83,11 @@ public class RepoGrab{
 
     private boolean cloneRepo(String url,String name){
         try{
+            String cleanPath = FileNameCleaner.cleanFileName(name);
             Git.cloneRepository()
+                    .setNoCheckout(true)
                     .setURI(url+".git")
-                    .setDirectory(new File("repos/"+name))
+                    .setDirectory(new File("repos/"+cleanPath))
                     .call();
             return true;
         } catch (InvalidRemoteException e) {
@@ -99,7 +101,9 @@ public class RepoGrab{
 
     public void cloneRepos(){
         for(int i=0;i<getRepos().size();i++) {
-
+            System.out.println("** Cloning "+getRepo(i).getName());
+            if(cloneRepo(getRepo(i).getUrl(),getRepo(i).getName()))
+                System.out.println("** Clone successful");
         }
     }
 
