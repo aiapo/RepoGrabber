@@ -12,6 +12,7 @@ Example:
   * Push activity
   * Private status
   * Archive status
+* Grabs straight from Github's GraphQL API, all results
 * Clones repos
 * Lists repos
 * Output to CSV
@@ -22,6 +23,5 @@ Example:
 * Use *Community Users* to determine if a repo should be cloned
 * Use *Total Bytes* to determine if a repo should be cloned
 * Use *Total Commits* to determine if repo should be cloned
-* Pagination of repos (priority as it currently only gets up to 100!)
 * Cleaner code
 * and more!
