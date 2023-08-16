@@ -16,13 +16,12 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
-    private String variables,pushed,created,languages;
-    private Boolean isArchived,isPublic;
+    private String variables,pushed,created,languages,isArchived,isPublic;
     private Integer amountReturned;
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
-    public RepoGrab(Boolean isArchived,Boolean isPublic,String pushed,String created,String languages,Integer amountReturned) {
+    public RepoGrab(String isArchived,String isPublic,String pushed,String created,String languages,Integer amountReturned) {
         this.isArchived=isArchived;
         this.isPublic=isPublic;
         this.pushed=pushed;
@@ -38,9 +37,11 @@ public class RepoGrab{
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"queryString\": \"");
-        if(isPublic)
+        if(isPublic.toLowerCase()=="y")
             sb.append("is:public");
-        if(!isArchived)
+        if(isArchived.toLowerCase()=="y")
+            sb.append(" archived:true");
+        else
             sb.append(" archived:false");
         if(pushed!=null)
             sb.append(" pushed:"+pushed);
