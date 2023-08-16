@@ -19,6 +19,8 @@ Example:
 ## Planned:
 * Maybe a GUI
 * Use *Specified Language Bytes/Total Bytes* to determine if a repo should be cloned
-* Pagination (priority!)
+* Use *Community Users* to determine if a repo should be cloned
+* Use *Total Bytes* to determine if a repo should be cloned
+* Pagination of repos (priority as it currently only gets up to 100!)
 * Cleaner code
 * and more!
