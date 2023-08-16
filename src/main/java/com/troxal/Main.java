@@ -9,17 +9,13 @@ public class Main {
 
         System.out.println("-- Welcome to RepoGrabber! --\n");
         Scanner scn = new Scanner(System.in);
-        System.out.println("Do you want only public repos? (y/n): ");
-        String isPublic = scn.next();
-        System.out.println("Do you want archived repos? (y/n): ");
-        String isArchive = scn.next();
         System.out.println("At least how many followers on project: ");
         Integer followers = Integer.valueOf(scn.next());
         System.out.println("What language do you want to grab? (ex: java)");
         String languages = scn.next();
 
         System.out.println("\n** Grabbing repos!");
-        RepoGrab rg = new RepoGrab(isArchive,isPublic,followers,languages);
+        RepoGrab rg = new RepoGrab(followers,languages);
         System.out.println("\n** Grabbed repos!");
 
         while(continueA==true){

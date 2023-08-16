@@ -17,16 +17,14 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
-    private String variables,languages,isArchived,isPublic;
+    private String variables,languages;
     private Integer amountReturned,followers;
-    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-06-01");
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-06-01"),currentDate=LocalDate.now();
 
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
-    public RepoGrab(String isArchived,String isPublic,Integer followers,String languages) {
-        this.isArchived=isArchived;
-        this.isPublic=isPublic;
+    public RepoGrab(Integer followers,String languages) {
         this.followers=followers;
         this.languages=languages;
         this.amountReturned=50;
@@ -39,14 +37,8 @@ public class RepoGrab{
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"queryString\": \"");
-        if(isPublic.toLowerCase()=="y")
-            sb.append("is:public");
-        if(isArchived.toLowerCase()=="y")
-            sb.append(" archived:true");
-        else
-            sb.append(" archived:false");
         if(followers!=null)
-            sb.append(" followers:>="+followers);
+            sb.append("followers:>="+followers);
         if(languages!=null) {
             sb.append(" language:"+languages);
         }
@@ -62,7 +54,7 @@ public class RepoGrab{
 
         String query = "query listRepos($queryString: String!,$amountReturned: Int!,$cursorValue: String) { rateLimit { cost remaining resetAt } search(query: $queryString, type: REPOSITORY, first: $amountReturned after:$cursorValue) { repositoryCount pageInfo { endCursor hasNextPage } edges { node { ... on Repository { id name createdAt isArchived isPrivate url assignableUsers { totalCount } languages(first: 3, orderBy: {field: SIZE, direction: DESC}) { edges { size node { name } } totalSize } defaultBranchRef { target { ... on Commit { history { totalCount } } } } } } } } }";
         try{
-            System.out.println(variables);
+            System.out.println("Variables: "+variables);
             JSONResponse = api.getData(authToken,query,variables);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -88,10 +80,10 @@ public class RepoGrab{
             System.out.println("Next cursor:"+JSONResponse.getSearch().getPageInfo().getEndCursor()+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(JSONResponse.getSearch().getPageInfo().getEndCursor());
         }
-        while (JSONResponse.getRateLimit().getRemaining()>100) {
+        while (JSONResponse.getRateLimit().getRemaining()>100&&endingDate.isBefore(currentDate)) {
             beginningDate = endingDate;
             endingDate = endingDate.plusMonths(6);
-            System.out.println("New date range: "+beginningDate+" to "+endingDate);
+            System.out.println("Date range: "+beginningDate+" to "+endingDate+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(null);
         }
     }
