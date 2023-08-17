@@ -13,15 +13,19 @@ public class Main {
         Integer followers = Integer.valueOf(scn.next());
         System.out.println("What language do you want to grab? (ex: 'java'): ");
         String languages = scn.next();
-        System.out.println("What is the minimum amount of users wanted? (ex: '10'): ");
+        System.out.println("What is the minimum amount of users wanted? (ex: '5'): ");
         Integer users = Integer.valueOf(scn.next());
         System.out.println("What is the percentage of the language in the repo wanted? (ex. '50' means at >=50% is language): ");
         Integer percentLanguage = Integer.valueOf(scn.next());
         System.out.println("What is minimum amount of commits wanted? (ex. '300'): ");
         Integer totalCommit = Integer.valueOf(scn.next());
+        System.out.println("What is minimum size in bytes of repo wanted? (ex. '5000'): ");
+        Integer totalSize = Integer.valueOf(scn.next());
+        System.out.println("What is start date of repos wanted? (ex. '2010-01-01'): ");
+        String sDate = scn.next();
 
         System.out.println("\n** Grabbing repos!");
-        RepoGrab rg = new RepoGrab(followers,languages,users,percentLanguage,totalCommit);
+        RepoGrab rg = new RepoGrab(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate);
         System.out.println("\n** Grabbed repos!");
 
         while(continueA==true){

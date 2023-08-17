@@ -7,6 +7,7 @@ import kong.unirest.Unirest;
 
 import com.fasterxml.jackson.core.*;
 
+import java.net.http.HttpTimeoutException;
 import java.util.concurrent.TimeUnit;
 
 public class GitHubGraphQL {
@@ -14,10 +15,11 @@ public class GitHubGraphQL {
         HttpResponse<JsonNode> httpResponse = Unirest.post("https://api.github.com/graphql")
                 .header("Authorization", "Bearer " + authToken)
                 .body("{\"query\": \""+query+"\","+"\"variables\": "+variables+"}")
+                .connectTimeout(20000)
                 .asJson();
 
         try {
-            TimeUnit.SECONDS.sleep(7);
+            TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

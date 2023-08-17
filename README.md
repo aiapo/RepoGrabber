@@ -27,7 +27,7 @@ For example:
 
 ## Keep in mind
 * You need to specify your own GitHub API in keys.config, follow sample
-* Every GraphQL call can only get 1,000 repos total even with pagination, hence why the queries are chunked every 3 months
+* Every GraphQL call can only get 1,000 repos total even with pagination, hence why the queries are chunked every 4 months
   * This should allow you to get all repos, BUT it will take longer
-* There is a 7 seconds wait every query to prevent secondary rate limits
+* There is a 10 seconds wait every query to prevent secondary rate limits
 * The code is a bit messy, I hope to clean it up soon

@@ -18,18 +18,21 @@ import org.eclipse.jgit.api.errors.TransportException;
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
     private String variables,language;
-    private Integer amountReturned,followers,users,percentLanguage,totalCommit;
-    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-03-01"),currentDate=LocalDate.now();
+    private Integer amountReturned,followers,users,percentLanguage,totalCommit,totalSize;
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-04-01"),currentDate=LocalDate.now();
 
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
-    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit) {
+    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,Integer totalSize,String sDate) {
         this.followers=followers;
         this.language=language;
         this.users=users;
         this.percentLanguage=percentLanguage;
         this.totalCommit=totalCommit;
+        this.totalSize=totalSize;
+        this.beginningDate = LocalDate.parse(sDate);
+        this.endingDate = beginningDate.plusMonths(4);
         this.amountReturned=50;
 
         jsonToRepoData(null);
@@ -44,6 +47,9 @@ public class RepoGrab{
             sb.append("followers:>="+followers);
         if(language!=null) {
             sb.append(" language:"+language);
+        }
+        if(totalSize!=null) {
+            sb.append(" size:>="+totalSize);
         }
         sb.append(" pushed:");
         sb.append(beginningDate+".."+endingDate);
@@ -100,7 +106,7 @@ public class RepoGrab{
         }
         while (JSONResponse.getRateLimit().getRemaining()>100&&endingDate.isBefore(currentDate)) {
             beginningDate = endingDate;
-            endingDate = endingDate.plusMonths(3);
+            endingDate = endingDate.plusMonths(4);
             System.out.println("Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(null);
         }
