@@ -13,7 +13,7 @@ public class Main {
         Integer followers = Integer.valueOf(scn.next());
         System.out.println("What language do you want to grab? (ex: 'java'): ");
         String languages = scn.next();
-        System.out.println("What is the minimum amount of users wanted? (ex: '5'): ");
+        System.out.println("What is the minimum amount of assignable users wanted? (ex: '5'): ");
         Integer users = Integer.valueOf(scn.next());
         System.out.println("What is the percentage of the language in the repo wanted? (ex. '50' means at >=50% is language): ");
         Integer percentLanguage = Integer.valueOf(scn.next());
