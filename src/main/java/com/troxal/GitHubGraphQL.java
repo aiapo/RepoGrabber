@@ -17,7 +17,7 @@ public class GitHubGraphQL {
                 .asJson();
 
         try {
-            TimeUnit.SECONDS.sleep(10);
+            TimeUnit.SECONDS.sleep(7);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

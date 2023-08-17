@@ -17,16 +17,19 @@ import org.eclipse.jgit.api.errors.TransportException;
 
 public class RepoGrab{
     static private String authToken = getConfig.getKey();
-    private String variables,languages;
-    private Integer amountReturned,followers;
+    private String variables,language;
+    private Integer amountReturned,followers,users,percentLanguage,totalCommit;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-06-01"),currentDate=LocalDate.now();
 
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
 
-    public RepoGrab(Integer followers,String languages) {
+    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit) {
         this.followers=followers;
-        this.languages=languages;
+        this.language=language;
+        this.users=users;
+        this.percentLanguage=percentLanguage;
+        this.totalCommit=totalCommit;
         this.amountReturned=50;
 
         jsonToRepoData(null);
@@ -39,8 +42,8 @@ public class RepoGrab{
         sb.append("{\"queryString\": \"");
         if(followers!=null)
             sb.append("followers:>="+followers);
-        if(languages!=null) {
-            sb.append(" language:"+languages);
+        if(language!=null) {
+            sb.append(" language:"+language);
         }
         sb.append(" pushed:");
         sb.append(beginningDate+".."+endingDate);
@@ -65,15 +68,30 @@ public class RepoGrab{
         queryData(endCursor);
         for(int i=0;i<JSONResponse.getSearch().getEdges().size();i++){
             if(JSONResponse.getSearch().getEdges().get(i).getNode().getDefaultBranchRef()!=null){
+                Boolean ignoreRepo=false;
                 Node tempRepo = JSONResponse.getSearch().getEdges().get(i).getNode();
                 List<Language> languages = new ArrayList<>();
                 for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
-                    languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+                    Languages tempLanguage = tempRepo.getLanguages();
+                    if(tempLanguage.getEdges().get(j).getNode().getName()==language)
+                        if((tempLanguage.getEdges().get(j).getSize()/tempLanguage.getTotalSize())>=percentLanguage){
+                            languages.add(new Language(tempRepo.getLanguages().getEdges().get(j).getNode().getName(),tempRepo.getLanguages().getEdges().get(j).getSize()));
+                        }else{
+                            ignoreRepo=true;
+                        }
                 }
-                System.out.println("** Added "+tempRepo.getName());
-                repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount(),languages));
-            }else{
-                System.out.println("*** Skipped repo...");
+                if(tempRepo.getAssignableUsers().getTotalCount()<users)
+                    ignoreRepo=true;
+
+                if(tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount()<totalCommit)
+                    ignoreRepo=true;
+
+                if(!ignoreRepo){
+                    repos.add(new RepoData(tempRepo.getId(), tempRepo.getName(), tempRepo.getUrl(), tempRepo.getCreatedAt(), tempRepo.getAssignableUsers().getTotalCount(),tempRepo.getLanguages().getTotalSize(),tempRepo.getDefaultBranchRef().getTarget().getHistory().getTotalCount(),languages));
+                    System.out.println("** Added "+tempRepo.getName());
+                }else{
+                    //System.out.println("*** Repo doesn't meet thresholds.");
+                }
             }
         }
         while (JSONResponse.getSearch().getPageInfo().gethasNextPage()&&JSONResponse.getRateLimit().getRemaining()>100){
@@ -83,7 +101,7 @@ public class RepoGrab{
         while (JSONResponse.getRateLimit().getRemaining()>100&&endingDate.isBefore(currentDate)) {
             beginningDate = endingDate;
             endingDate = endingDate.plusMonths(6);
-            System.out.println("Date range: "+beginningDate+" to "+endingDate+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
+            System.out.println("Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(null);
         }
     }
