@@ -27,12 +27,6 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>6.6.0.202305301015-r</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.11.2</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
         <dependency>
             <groupId>com.opencsv</groupId>

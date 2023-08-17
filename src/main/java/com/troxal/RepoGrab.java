@@ -153,7 +153,7 @@ public class RepoGrab{
     public void cloneRepos(){
         for(int i=0;i<getRepos().size();i++) {
             System.out.println("** Cloning "+getRepo(i).getName());
-            if(cloneRepo(getRepo(i).getUrl(),getRepo(i).getName()))
+            if(cloneRepo(getRepo(i).getUrl(),getRepo(i).getName()+"_"+getRepo(i).getId()))
                 System.out.println("** Clone successful");
         }
     }
