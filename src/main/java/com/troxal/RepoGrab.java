@@ -19,7 +19,7 @@ public class RepoGrab{
     static private String authToken = getConfig.getKey();
     private String variables,language;
     private Integer amountReturned,followers,users,percentLanguage,totalCommit;
-    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-06-01"),currentDate=LocalDate.now();
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-03-01"),currentDate=LocalDate.now();
 
     private Data JSONResponse = null;
     private List<RepoData> repos = new ArrayList<>();
@@ -100,7 +100,7 @@ public class RepoGrab{
         }
         while (JSONResponse.getRateLimit().getRemaining()>100&&endingDate.isBefore(currentDate)) {
             beginningDate = endingDate;
-            endingDate = endingDate.plusMonths(6);
+            endingDate = endingDate.plusMonths(3);
             System.out.println("Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+JSONResponse.getRateLimit().getRemaining());
             jsonToRepoData(null);
         }
