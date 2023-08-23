@@ -133,6 +133,7 @@ public class RepoGrab{
                     System.out.println("** Added "+tempRepo.getName());
                 }else{
                     //System.out.println("*** Repo doesn't meet thresholds.");
+                    //TODO: counter for ignored projects
                 }
             }
         }
