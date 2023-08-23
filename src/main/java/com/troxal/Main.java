@@ -32,7 +32,7 @@ public class Main {
                     "\n 1. Print all repos" +
                     "\n 2. Clone all repos"+
                     "\n 3. Export to CSV"+
-                    "\n 0. Exit\n");
+                    "\n 4. Exit\n");
             System.out.println("Choice: ");
             menuChoice = Integer.valueOf(scn.next());
             switch(menuChoice){
