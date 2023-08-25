@@ -26,7 +26,7 @@ public class GitHubJSON {
         this.data = data;
     }
 
-   /* @JsonProperty("errors")
+    @JsonProperty("errors")
     private Errors errors;
 
     @JsonProperty("errors")
@@ -37,6 +37,5 @@ public class GitHubJSON {
     @JsonProperty("errors")
     public void setErrors(Errors errors) {
         this.errors = errors;
-    }*/
-
+    }
 }
