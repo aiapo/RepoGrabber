@@ -15,7 +15,7 @@ public class RepoGrab {
     static private String authToken = Config.getAuthToken();
     private String language;
     private Integer amountReturned,followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
-    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-04-01"),currentDate=LocalDate.now();
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-02-01"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
@@ -27,7 +27,7 @@ public class RepoGrab {
         this.totalCommit=totalCommit;
         this.totalSize=totalSize;
         this.beginningDate = LocalDate.parse(sDate);
-        this.endingDate = beginningDate.plusMonths(4);
+        this.endingDate = beginningDate.plusDays(10);
         this.amountReturned=50;
 
         getRepos(null);
@@ -71,7 +71,7 @@ public class RepoGrab {
             if(d.getErrors()==null)
                 return d.getData();
             else{
-                System.out.println("[ERROR] Encountered an error on from GitHub: \n"+d.getErrors().getMessage());
+                System.out.println("[ERROR] Encountered an error on from GitHub: \n"+d.getErrors().get(0).getMessage());
                 return null;
             }
         } catch (JsonMappingException e) {
@@ -147,8 +147,8 @@ public class RepoGrab {
         }else if(data.getStatus()==403||data.getStatus()==502){
           System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting 10 seconds...\n -"+data.getBody());
           try {
-              // Wait 10 seconds to comply with API limits
-              TimeUnit.SECONDS.sleep(10);
+              // Wait 15 seconds to comply with API limits
+              TimeUnit.SECONDS.sleep(15);
           } catch (InterruptedException e) {
               System.out.println("[ERROR] Error trying to wait: \n"+e);
           }
@@ -236,26 +236,27 @@ public class RepoGrab {
             }
 
             // While there is a next page AND you still have at least 100 API calls left
-            while(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
+            if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                 // Print status on cursor/remaining API
                 System.out.println("[INFO] Next cursor:"+repoData.getSearch().getPageInfo().getEndCursor()+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
                 // Recurse with next cursor
                 getRepos(repoData.getSearch().getPageInfo().getEndCursor());
             }
             // After there's no more pages, go to the next chunk until the ending date is after the current date
-            while (repoData.getRateLimit().getRemaining()>100&&endingDate.isBefore(currentDate)) {
+            if(endingDate.isBefore(currentDate)&&repoData.getRateLimit().getRemaining()>100) {
                 // Update beginningDate to be last endingDate
                 beginningDate = endingDate;
-                // Add four months to the endingDate
-                endingDate = endingDate.plusMonths(4);
+
+                endingDate = endingDate.plusDays(10);
+                if(endingDate.isAfter(currentDate))
+                    // Set to current date
+                    endingDate=currentDate;
+
                 // Print status on date range/remaining API
                 System.out.println("[INFO] Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
                 // Recurse with no cursor
                 getRepos(null);
             }
-            System.out.println("---\n* Added repos: "+repoCollection.size()+"\n" +
-                    "* Number of skipped repos: "+ignoredRepos+"\n" +
-                    "* Total repos: "+repoData.getSearch().getRepositoryCount()+"\n---");
         }
     }
 
