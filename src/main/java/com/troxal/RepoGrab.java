@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class RepoGrab {
@@ -14,7 +16,7 @@ public class RepoGrab {
     private String language;
     private Integer amountReturned,followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-04-01"),currentDate=LocalDate.now();
-    private List<RepoInfo> repoCollection = new ArrayList<>();
+    private Set<RepoInfo> repoCollection = new HashSet<>();
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
     public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,Integer totalSize,String sDate) {
@@ -65,7 +67,13 @@ public class RepoGrab {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             // Return the JSON data from the POST query and map each JSON Object to their respective Java Object
-            return objectMapper.readValue(responseData, GitHubJSON.class).getData();
+            GitHubJSON d = objectMapper.readValue(responseData, GitHubJSON.class);
+            if(d.getErrors()==null)
+                return d.getData();
+            else{
+                System.out.println("[ERROR] Encountered an error on from GitHub: \n"+d.getErrors().getMessage());
+                return null;
+            }
         } catch (JsonMappingException e) {
             System.out.println("[ERROR] Encountered an error on when JSON mapping: \n"+e);
             return null;
@@ -213,7 +221,7 @@ public class RepoGrab {
                                         languageList
                                 )
                         );
-                        System.out.println("** Added "+tempRepo.getName());
+                        System.out.println("** Added "+tempRepo.getName()+" ("+tempRepo.getUrl()+")");
                     }else
                         ignoredRepos++;
                 }
@@ -252,14 +260,10 @@ public class RepoGrab {
     }
 
     // Get all repos
-    public List<RepoInfo> getRepos(){
-        return repoCollection;
-    }
+    public List<RepoInfo> getRepos(){return repoCollection.stream().toList();}
 
     // Get a single repo's data
-    public RepoInfo getRepo(Integer id){
-        return getRepos().get(id);
-    }
+    public RepoInfo getRepo(Integer id){return getRepos().get(id);}
 
 
 }
