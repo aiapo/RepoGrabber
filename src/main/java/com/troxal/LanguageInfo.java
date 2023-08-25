@@ -25,6 +25,6 @@ public class LanguageInfo {
 
     @Override
     public String toString() {
-        return "Language "+getName()+" is "+getSize()+" bytes of the repo";
+        return getName()+":"+getSize()+" ";
     }
 }
