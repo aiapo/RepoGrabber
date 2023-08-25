@@ -137,7 +137,7 @@ public class RepoGrab {
         // 200 = OK
         if(data.getStatus()==200){
             // Convert JSON response to Object
-            Data repos = jsonToRepo(GitHub.GraphQL(authToken, query, queryVariables).getBody());
+            Data repos = jsonToRepo(data.getBody());
             // If no error mapping, return the mapped repos
             if(repos!=null)
                 return repos;
@@ -241,7 +241,7 @@ public class RepoGrab {
             // While there is a next page AND you still have at least 100 API calls left
             while(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                 // Print status on cursor/remaining API
-                System.out.println("[INFO] Next cursor:"+repoData.getSearch().getPageInfo().getEndCursor()+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
+                System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Next Page: "+repoData.getSearch().getPageInfo().getHasNextPage()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
                 // Recurse with next cursor
                 getRepos(repoData.getSearch().getPageInfo().getEndCursor());
             }
