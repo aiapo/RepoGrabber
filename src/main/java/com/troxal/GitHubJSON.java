@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "data"
@@ -27,15 +29,15 @@ public class GitHubJSON {
     }
 
     @JsonProperty("errors")
-    private Errors errors;
+    private List<Error> errors;
 
     @JsonProperty("errors")
-    public Errors getErrors() {
+    public List<Error> getErrors() {
         return errors;
     }
 
     @JsonProperty("errors")
-    public void setErrors(Errors errors) {
+    public void setErrors(List<Error> errors) {
         this.errors = errors;
     }
 }

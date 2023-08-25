@@ -1,3 +1,4 @@
+
 package com.troxal;
 
 import javax.annotation.Generated;
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "message"
 })
 @Generated("jsonschema2pojo")
-public class Errors {
+public class Error {
 
     @JsonProperty("message")
     private String message;
