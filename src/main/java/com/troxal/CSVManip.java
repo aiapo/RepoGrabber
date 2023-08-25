@@ -15,12 +15,12 @@ public class CSVManip {
         {
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
-            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language","Creation Date","Update Date","Push Date","Mentionable Users","Issue Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages"};
+            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language","Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages"};
             writer.writeNext(headerTxt);
 
             for(int i=0;i<repos.size();i++){
                 StringBuilder sb = new StringBuilder();
-                for(int j=0;i<repos.get(i).getLanguages().size();j++)
+                for(int j=0;j<repos.get(i).getLanguages().size();j++)
                     sb.append(repos.get(i).getLanguages().get(j).toString());
 
                 String tempLine[] = new String[]{
