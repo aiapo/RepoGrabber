@@ -5,23 +5,86 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Integer menuChoice = 0;
+        Boolean success = false;
 
         System.out.println("-- Welcome to RepoGrabber! --\n");
         Scanner scn = new Scanner(System.in);
         System.out.println("What is the minimum amount of followers on project wanted? (ex: '50'): ");
-        Integer followers = Integer.valueOf(scn.next());
+        Integer followers=0;
+        while(!success){
+            try {
+                followers = Integer.valueOf(scn.next());
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a number (ex: '50'): ");
+            }
+        }
         System.out.println("What language do you want to grab? (ex: 'java'): ");
-        String languages = scn.next();
-        System.out.println("What is the minimum amount of mentionable users wanted? (ex: '50'): ");
-        Integer users = Integer.valueOf(scn.next());
+        String languages="";
+        success=false;
+        while(!success){
+            try {
+                languages = scn.next();
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a string (ex: 'java'): ");
+            }
+        }
+        System.out.println("What is the minimum amount of mentionable users wanted? (ex: '20'): ");
+        Integer users = 0;
+        success=false;
+        while(!success){
+            try {
+                users = Integer.valueOf(scn.next());
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a number (ex: '20'): ");
+            }
+        }
         System.out.println("What is the percentage of the language in the repo wanted? (ex. '50' means at >=50% is language): ");
-        Integer percentLanguage = Integer.valueOf(scn.next());
+        Integer percentLanguage=0;
+        success=false;
+        while(!success){
+            try {
+                percentLanguage = Integer.valueOf(scn.next());
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a number (ex: '50'): ");
+            }
+        }
         System.out.println("What is minimum amount of commits wanted? (ex. '300'): ");
-        Integer totalCommit = Integer.valueOf(scn.next());
+        Integer totalCommit=0;
+        success=false;
+        while(!success){
+            try {
+                totalCommit = Integer.valueOf(scn.next());
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a number (ex: '300'): ");
+            }
+        }
         System.out.println("What is minimum size in bytes of repo wanted? (ex. '5000'): ");
-        Integer totalSize = Integer.valueOf(scn.next());
+        Integer totalSize=0;
+        success=false;
+        while(!success){
+            try {
+                totalSize = Integer.valueOf(scn.next());
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a number (ex: '5000'): ");
+            }
+        }
         System.out.println("What is start date of repos wanted? (ex. '2010-01-01'): ");
-        String sDate = scn.next();
+        String sDate="";
+        success=false;
+        while(!success){
+            try {
+                sDate = scn.next();
+                success = true;
+            }catch(NumberFormatException e){
+                System.out.println("Invalid, please enter a string (ex: '2010-01-01'): ");
+            }
+        }
 
         System.out.println("\n** Grabbing repos!");
         RepoGrab rg = new RepoGrab(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate);
