@@ -218,6 +218,9 @@ public class RepoGrab {
                                         tempRepo.getMentionableUsers().getTotalCount(),
                                         tempRepo.getLanguages().getTotalSize(),
                                         tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
+                                        tempRepo.getForkCount(),
+                                        tempRepo.getStargazerCount(),
+                                        tempRepo.getWatchers().getTotalCount(),
                                         languageList
                                 )
                         );
