@@ -52,28 +52,4 @@ public class RateLimit {
         this.resetAt = resetAt;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(RateLimit.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("cost");
-        sb.append('=');
-        sb.append(((this.cost == null)?"<null>":this.cost));
-        sb.append(',');
-        sb.append("remaining");
-        sb.append('=');
-        sb.append(((this.remaining == null)?"<null>":this.remaining));
-        sb.append(',');
-        sb.append("resetAt");
-        sb.append('=');
-        sb.append(((this.resetAt == null)?"<null>":this.resetAt));
-        sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
-    }
-
 }

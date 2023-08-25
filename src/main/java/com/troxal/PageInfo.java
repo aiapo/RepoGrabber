@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "endCursor",
-    "startCursor"
+    "hasNextPage"
 })
 @Generated("jsonschema2pojo")
 public class PageInfo {
@@ -30,33 +30,13 @@ public class PageInfo {
     }
 
     @JsonProperty("hasNextPage")
-    public Boolean gethasNextPage() {
+    public Boolean getHasNextPage() {
         return hasNextPage;
     }
 
-    @JsonProperty("hasNextPage")
+    @JsonProperty("startCursor")
     public void setHasNextPage(Boolean hasNextPage) {
         this.hasNextPage = hasNextPage;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(PageInfo.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("endCursor");
-        sb.append('=');
-        sb.append(((this.endCursor == null)?"<null>":this.endCursor));
-        sb.append(',');
-        sb.append("hasNextPage");
-        sb.append('=');
-        sb.append(((this.hasNextPage == null)?"<null>":this.hasNextPage));
-        sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
     }
 
 }

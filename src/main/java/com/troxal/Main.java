@@ -12,7 +12,7 @@ public class Main {
         Integer followers = Integer.valueOf(scn.next());
         System.out.println("What language do you want to grab? (ex: 'java'): ");
         String languages = scn.next();
-        System.out.println("What is the minimum amount of assignable to issues users wanted? (ex: '3'): ");
+        System.out.println("What is the minimum amount of mentionable users wanted? (ex: '50'): ");
         Integer users = Integer.valueOf(scn.next());
         System.out.println("What is the percentage of the language in the repo wanted? (ex. '50' means at >=50% is language): ");
         Integer percentLanguage = Integer.valueOf(scn.next());
@@ -40,10 +40,10 @@ public class Main {
                     System.out.println(rg.getRepos());
                     break;
                 case 2:
-                    rg.cloneRepos();
+                    Clone.cloneRepos(rg.getRepos());
                     break;
                 case 3:
-                    rg.createCSV();
+                    CSVManip.createCSV(rg.getRepos());
                     break;
                 case 4:
                     break;
