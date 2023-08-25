@@ -4,14 +4,16 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
+import kong.unirest.Headers;
 
 public class Requests {
-    private String headers,body;
+    private String body;
+    private Headers headers;
     private Integer status;
 
     public Requests(){
     }
-    public Requests(Integer status,String headers,String body){
+    public Requests(Integer status,Headers headers,String body){
         this.status = status;
         this.headers = headers;
         this.body = body;
@@ -20,7 +22,7 @@ public class Requests {
     public Integer getStatus(){
         return status;
     }
-    public String getHeader(){
+    public Headers getHeader(){
         return headers;
     }
     public String getBody(){
@@ -38,10 +40,11 @@ public class Requests {
                     .connectTimeout(20000)
                     .asJson();
 
+            System.out.println("[DEBUG] Sent POST Request to: "+url);
             // Return the headers and the body
             return new Requests(
                     httpResponse.getStatus(),
-                    httpResponse.getHeaders().toString(),
+                    httpResponse.getHeaders(),
                     httpResponse.getBody().getObject().toString(4)
             );
         } catch (UnirestException e) {
