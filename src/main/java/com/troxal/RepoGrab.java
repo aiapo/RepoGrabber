@@ -236,14 +236,16 @@ public class RepoGrab {
             }
 
             // While there is a next page AND you still have at least 100 API calls left
-            if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
+            while(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                 // Print status on cursor/remaining API
                 System.out.println("[INFO] Next cursor:"+repoData.getSearch().getPageInfo().getEndCursor()+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
                 // Recurse with next cursor
                 getRepos(repoData.getSearch().getPageInfo().getEndCursor());
             }
             // After there's no more pages, go to the next chunk until the ending date is after the current date
-            if(endingDate.isBefore(currentDate)&&repoData.getRateLimit().getRemaining()>100) {
+            while(endingDate.isBefore(currentDate)
+                    &&repoData.getSearch().getPageInfo().getEndCursor()!=endCursor
+                    && repoData.getRateLimit().getRemaining()>100) {
                 // Update beginningDate to be last endingDate
                 beginningDate = endingDate;
 
