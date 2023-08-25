@@ -71,7 +71,7 @@ public class RepoGrab {
             if(d.getErrors()==null)
                 return d.getData();
             else{
-                System.out.println("[ERROR] Encountered an error on from GitHub: \n"+d.getErrors().get(0).getMessage());
+                System.out.println("[ERROR] Encountered an error on from GitHub: \n - "+d.getErrors().get(0).getMessage());
                 return null;
             }
         } catch (JsonMappingException e) {
@@ -145,7 +145,7 @@ public class RepoGrab {
                 return null;
         // 403 = Unauthorized / 502 = Bad Gateway
         }else if(data.getStatus()==403||data.getStatus()==502){
-          System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting 10 seconds...\n -"+data.getBody());
+          System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting 15 seconds...\n -"+data.getBody());
           try {
               // Wait 15 seconds to comply with API limits
               TimeUnit.SECONDS.sleep(15);
@@ -155,7 +155,7 @@ public class RepoGrab {
            return null;
         // Just error if any other status
         }else{
-            System.out.println("[ERROR] Encountered an error on the API: \n - Status:"+data.getStatus()+"\n - Headers: "+data.getHeader()+"\n - Body: "+data.getBody());
+            System.out.println("[ERROR] Encountered an error from GitHub: \n - Status:"+data.getStatus()+"\n - Body: "+data.getBody());
             return null;
         }
     }
