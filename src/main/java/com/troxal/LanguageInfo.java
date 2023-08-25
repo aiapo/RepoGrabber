@@ -1,10 +1,10 @@
 package com.troxal;
 
-public class Language {
+public class LanguageInfo {
     private String name;
     private Integer size;
 
-    public Language(String name,Integer size){
+    public LanguageInfo(String name,Integer size){
         setName(name);
         setSize(size);
     }

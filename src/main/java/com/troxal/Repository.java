@@ -8,22 +8,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "history"
+    "repo"
 })
 @Generated("jsonschema2pojo")
-public class Target {
+public class Repository {
 
-    @JsonProperty("history")
-    private History history;
+    @JsonProperty("repo")
+    private Repo repo;
 
-    @JsonProperty("history")
-    public History getHistory() {
-        return history;
+    @JsonProperty("repo")
+    public Repo getRepo() {
+        return repo;
     }
 
-    @JsonProperty("history")
-    public void setHistory(History history) {
-        this.history = history;
+    @JsonProperty("repo")
+    public void setRepo(Repo repo) {
+        this.repo = repo;
     }
 
 }

@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "totalCount"
 })
 @Generated("jsonschema2pojo")
-public class AssignableUsers {
+public class IssueUsers {
 
     @JsonProperty("totalCount")
     private Integer totalCount;
@@ -24,22 +24,6 @@ public class AssignableUsers {
     @JsonProperty("totalCount")
     public void setTotalCount(Integer totalCount) {
         this.totalCount = totalCount;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(AssignableUsers.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("totalCount");
-        sb.append('=');
-        sb.append(((this.totalCount == null)?"<null>":this.totalCount));
-        sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
     }
 
 }

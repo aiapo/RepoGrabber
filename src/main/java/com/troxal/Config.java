@@ -5,12 +5,12 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 /**
- * Class: getConfig
+ * Class: Config
  * Description: Gets config stuff like API keys so that they don't get exposed through Git and can be easily changed
  */
-public class getConfig {
+public class Config {
     // Just gets the API key from keys.config
-    public static String getKey() {
+    public static String getAuthToken() {
         Scanner scanner;
         try {
             scanner = new Scanner(new File("keys.config"));
@@ -19,5 +19,4 @@ public class getConfig {
             throw new RuntimeException(ex);
         }
     }
-
 }

@@ -8,13 +8,26 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "size",
     "node"
 })
 @Generated("jsonschema2pojo")
 public class Edge {
 
+    @JsonProperty("size")
+    private Integer size;
     @JsonProperty("node")
     private Node node;
+
+    @JsonProperty("size")
+    public Integer getSize() {
+        return size;
+    }
+
+    @JsonProperty("size")
+    public void setSize(Integer size) {
+        this.size = size;
+    }
 
     @JsonProperty("node")
     public Node getNode() {
@@ -24,22 +37,6 @@ public class Edge {
     @JsonProperty("node")
     public void setNode(Node node) {
         this.node = node;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        //sb.append(Edge.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        //sb.append("node");
-        //sb.append('=');
-        sb.append(((this.node == null)?"<null>":this.node));
-        sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
     }
 
 }
