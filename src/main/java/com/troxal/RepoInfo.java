@@ -7,7 +7,7 @@ public class RepoInfo {
     private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate;
     private Boolean isArchived,isFork;
     private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits;
-    private Integer forkCount,starCount,watchCount,projectCount,issueCount;
+    private Integer forkCount,starCount,watchCount;
     private List<LanguageInfo> languages = new ArrayList<>();
 
     public RepoInfo(
@@ -25,6 +25,9 @@ public class RepoInfo {
             Integer totalMentionableUsers,
             Integer totalProjectSize,
             Integer totalCommits,
+            Integer forkCount,
+            Integer starCount,
+            Integer watchCount,
             List<LanguageInfo> languages) {
         setId(id);
         setName(name);
@@ -41,6 +44,9 @@ public class RepoInfo {
         setTotalProjectSize(totalProjectSize);
         setLanguages(languages);
         setTotalCommits(totalCommits);
+        setForkCount(forkCount);
+        setStarCount(starCount);
+        setWatchCount(watchCount);
     }
 
     // Set/Get ID
@@ -161,22 +167,6 @@ public class RepoInfo {
     }
     public Integer getWatchCount(){
         return watchCount;
-    }
-
-    // Set/Get projectCount
-    public void setProjectCount(Integer projectCount){
-        this.projectCount=projectCount;
-    }
-    public Integer getProjectCount(){
-        return projectCount;
-    }
-
-    // Set/Get issueCount
-    public void setIssueCount(Integer issueCount){
-        this.issueCount=issueCount;
-    }
-    public Integer getIssueCount(){
-        return issueCount;
     }
 
     // Set/Get isArchived
