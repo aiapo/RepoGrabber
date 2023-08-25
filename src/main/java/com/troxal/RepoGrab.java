@@ -28,7 +28,7 @@ public class RepoGrab {
         this.totalSize=totalSize;
         this.beginningDate = LocalDate.parse(sDate);
         this.endingDate = beginningDate.plusDays(10);
-        this.amountReturned=50;
+        this.amountReturned=25;
 
         getRepos(null);
     }
@@ -145,7 +145,7 @@ public class RepoGrab {
                 return null;
         // 403 = Unauthorized / 502 = Bad Gateway
         }else if(data.getStatus()==403||data.getStatus()==502){
-          System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting 15 seconds...\n -"+data.getBody());
+          System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting "+15+" seconds...\n - Headers:\n "+data.getHeader().toString()+" \n - Body:\n"+data.getBody());
           try {
               // Wait 15 seconds to comply with API limits
               TimeUnit.SECONDS.sleep(15);
@@ -239,16 +239,14 @@ public class RepoGrab {
             }
 
             // While there is a next page AND you still have at least 100 API calls left
-            while(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
+            if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                 // Print status on cursor/remaining API
                 System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Next Page: "+repoData.getSearch().getPageInfo().getHasNextPage()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
                 // Recurse with next cursor
                 getRepos(repoData.getSearch().getPageInfo().getEndCursor());
             }
             // After there's no more pages, go to the next chunk until the ending date is after the current date
-            while(endingDate.isBefore(currentDate)
-                    &&repoData.getSearch().getPageInfo().getEndCursor()!=endCursor
-                    && repoData.getRateLimit().getRemaining()>100) {
+            if(endingDate.isBefore(currentDate)&&repoData.getRateLimit().getRemaining()>100) {
                 // Update beginningDate to be last endingDate
                 beginningDate = endingDate;
 
