@@ -10,6 +10,9 @@ created since 2010 that have at least ten users mentionable on them
 - **RETURNS:** 3358 distinct repos to be exported, analysis, cloned, etc
 - **TIME:** ~53 minutes
 
+*Please note that this example is based on one previous run and is not indicative of what 
+might be in the future/based on different queries.*
+
 ## Current:
 * CLI find to repos based on:
   * Amount of followers
