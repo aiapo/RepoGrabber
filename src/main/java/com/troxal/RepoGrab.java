@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -14,8 +15,12 @@ public class RepoGrab {
     // Initialize variables
     static private String authToken = Config.getAuthToken();
     private String language;
-    private Integer amountReturned,followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
-    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-02-01"),currentDate=LocalDate.now();
+    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
+    // 20 day chunks, 30 repos/page
+    private Integer addedTime=20;
+    private Integer amountReturned=45;
+    private Boolean ranAtLeastOnce=false;
+    private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-01-15"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
@@ -27,8 +32,8 @@ public class RepoGrab {
         this.totalCommit=totalCommit;
         this.totalSize=totalSize;
         this.beginningDate = LocalDate.parse(sDate);
-        this.endingDate = beginningDate.plusDays(10);
-        this.amountReturned=25;
+        this.endingDate = currentDate;
+        this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
 
         getRepos(null);
     }
@@ -51,15 +56,48 @@ public class RepoGrab {
         // Set the beginning to ending created dates
         sb.append(" created:");
         sb.append(beginningDate+".."+endingDate);
-        // Always 50 returned, it's supposed to allow 100, but I couldn't get that to work
-        if(amountReturned!=null)
-            sb.append("\",\"amountReturned\":"+amountReturned);
+        // This is set manually because otherwise the response may be unstable past like 50 (even then it's unstable)
+        sb.append("\",\"amountReturned\":"+amountReturned);
         // if endCursor then put, else null
         if(endCursor!=null)
             sb.append(",\"cursorValue\":\""+endCursor+"\"}");
         else
             sb.append(",\"cursorValue\":"+null+"}");
         return sb.toString();
+    }
+
+    private void dayOptimizer(Integer days){
+        try {
+            // Wait 2 seconds to comply with API limits
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            System.out.println("[ERROR] Error trying to wait: \n"+e);
+        }
+        String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +
+                "rateLimit { cost remaining resetAt } " +
+                    "search(query: $queryString, type: REPOSITORY, first: $amountReturned after: $cursorValue) { " +
+                        "repositoryCount " +
+                    "} " +
+                "}";
+        // Get the data
+        Data repoData = queryData(query,null);
+
+        if(repoData!=null){
+            System.out.println("Remaining API: "+repoData.getRateLimit().getRemaining());
+            if(repoData.getSearch().getRepositoryCount()>=700&&repoData.getSearch().getRepositoryCount()<=1000) {
+                addedTime = days;
+                System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
+            }else if(repoData.getSearch().getRepositoryCount()>1000){
+                addedTime=days/2;
+                endingDate=beginningDate.plusDays(addedTime);
+                dayOptimizer(addedTime);
+            }else{
+                addedTime=days+50;
+                endingDate=beginningDate.plusDays(addedTime);
+                dayOptimizer(addedTime);
+            }
+        }else
+            System.out.println("error with repoData");
     }
 
     private Data jsonToRepo(String responseData){
@@ -83,48 +121,7 @@ public class RepoGrab {
         }
     }
 
-    private Data queryData(String endCursor){
-        String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +
-                         "rateLimit { cost remaining resetAt } " +
-                          "search(query: $queryString, type: REPOSITORY, first: $amountReturned after: $cursorValue) { " +
-                            "repositoryCount " +
-                            "pageInfo { endCursor hasNextPage } " +
-                            "repositories: edges { " +
-                              "repo: node { " +
-                                "... on Repository { " +
-                                  "id " +
-                                  "name " +
-                                  "url " +
-                                  "description " +
-                                  "createdAt " +
-                                  "updatedAt " +
-                                  "pushedAt " +
-                                  "isArchived " +
-                                  "isPrivate " +
-                                  "isFork " +
-                                  "isEmpty " +
-                                  "primaryLanguage { name } " +
-                                  "forkCount " +
-                                  "stargazerCount " +
-                                  "watchers { totalCount } " +
-                                  "issueUsers: assignableUsers { totalCount } " +
-                                  "mentionableUsers { totalCount } " +
-                                  "languages(first: 3, orderBy: {field: SIZE, direction: DESC}) { " +
-                                    "edges { size node { name } } " +
-                                    "totalSize " +
-                                  "} " +
-                                  "mainBranch: defaultBranchRef { " +
-                                    "target { " +
-                                      "... on Commit { " +
-                                        "history { totalCount } " +
-                                      "} " +
-                                    "} " +
-                                  "} " +
-                                "} " +
-                              "} " +
-                            "} " +
-                          "} " +
-                        "}";
+    private Data queryData(String query,String endCursor){
         String queryVariables = generateVariables(endCursor);
 
         // For sake of testing, output the current variables
@@ -161,104 +158,150 @@ public class RepoGrab {
     }
 
     public void getRepos(String endCursor){
+        String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +
+                "rateLimit { cost remaining resetAt } " +
+                "search(query: $queryString, type: REPOSITORY, first: $amountReturned after: $cursorValue) { " +
+                    "repositoryCount " +
+                    "pageInfo { endCursor hasNextPage } " +
+                    "repositories: edges { " +
+                        "repo: node { " +
+                            "... on Repository { " +
+                                "id " +
+                                "name " +
+                                "url " +
+                                "description " +
+                                "createdAt " +
+                                "updatedAt " +
+                                "pushedAt " +
+                                "isArchived " +
+                                "isPrivate " +
+                                "isFork " +
+                                "isEmpty " +
+                                "primaryLanguage { name } " +
+                                "forkCount " +
+                                "stargazerCount " +
+                                "watchers { totalCount } " +
+                                "issueUsers: assignableUsers { totalCount } " +
+                                "mentionableUsers { totalCount } " +
+                                "languages(first: 3, orderBy: {field: SIZE, direction: DESC}) { " +
+                                    "edges { size node { name } } " +
+                                "totalSize " +
+                            "} " +
+                            "mainBranch: defaultBranchRef { " +
+                                "target { " +
+                                    "... on Commit { " +
+                                        "history { totalCount } " +
+                                    "} " +
+                                "} " +
+                            "} " +
+                        "} " +
+                    "} " +
+                "} " + "} " + "}";
         // Get the data
-        Data repoData = queryData(endCursor);
+        Data repoData = queryData(query,endCursor);
 
         if(repoData!=null){
-            // For each repo
-            for (int i=0;i<repoData.getSearch().getRepositories().size();i++){
-                // If there's anything in the default/main branch
-                if(repoData.getSearch().getRepositories().get(i).getRepo().getMainBranch()!=null){
-
-                    // Init don't ignore repo
-                    Boolean ignoreRepo = false;
-                    // Set a tempRepo var for less code duplication
-                    Repo tempRepo = repoData.getSearch().getRepositories().get(i).getRepo();
-
-                    // List of all languages
-                    List<LanguageInfo> languageList = new ArrayList<>();
-                    // For top 3 languages
-                    for(int j=0;j<tempRepo.getLanguages().getEdges().size();j++){
-                        // Add languages to language list
-                        languageList.add(
-                                new LanguageInfo(
-                                        tempRepo.getLanguages().getEdges().get(j).getNode().getName(),
-                                        tempRepo.getLanguages().getEdges().get(j).getSize()
-                                )
-                        );
-                        // If specified language over specified threshold, don't add repo
-                        if(tempRepo.getLanguages().getEdges().get(j).getNode().getName()==language)
-                            if((tempRepo.getLanguages().getEdges().get(j).getSize()/tempRepo.getLanguages().getTotalSize()<percentLanguage))
-                                ignoreRepo=true;
-                    }
-
-                    // If the mentionable users is less than the specified amount, ignore repo
-                    if(tempRepo.getMentionableUsers().getTotalCount()<users)
-                        ignoreRepo=true;
-
-                    // If the commit count is less than the specified amount, ignore repo
-                    if(tempRepo.getMainBranch().getTarget().getHistory().getTotalCount()<totalCommit)
-                        ignoreRepo=true;
-
-                    //If not ignored repo, add to repoCollection array
-                    if(!ignoreRepo){
-                        repoCollection.add(
-                                new RepoInfo(
-                                        tempRepo.getId(),
-                                        tempRepo.getName(),
-                                        tempRepo.getUrl(),
-                                        tempRepo.getDescription(),
-                                        tempRepo.getPrimaryLanguage().getName(),
-                                        tempRepo.getCreatedAt(),
-                                        tempRepo.getUpdatedAt(),
-                                        tempRepo.getPushedAt(),
-                                        tempRepo.getIsArchived(),
-                                        tempRepo.getIsFork(),
-                                        tempRepo.getIssueUsers().getTotalCount(),
-                                        tempRepo.getMentionableUsers().getTotalCount(),
-                                        tempRepo.getLanguages().getTotalSize(),
-                                        tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
-                                        tempRepo.getForkCount(),
-                                        tempRepo.getStargazerCount(),
-                                        tempRepo.getWatchers().getTotalCount(),
-                                        languageList
-                                )
-                        );
-                        System.out.println("** Added "+tempRepo.getName()+" ("+tempRepo.getUrl()+")");
-                    }else
-                        ignoredRepos++;
-                }
-            }
-
-            try {
-                // Wait 5 seconds each query to reduce API limits
-                System.out.println("[INFO] Wait 5 seconds...");
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                System.out.println("[ERROR] Error trying to wait: \n"+e);
-            }
-
-            // While there is a next page AND you still have at least 100 API calls left
-            if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
-                // Print status on cursor/remaining API
-                System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Next Page: "+repoData.getSearch().getPageInfo().getHasNextPage()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
-                // Recurse with next cursor
-                getRepos(repoData.getSearch().getPageInfo().getEndCursor());
-            }
-            // After there's no more pages, go to the next chunk until the ending date is after the current date
-            if(endingDate.isBefore(currentDate)&&repoData.getRateLimit().getRemaining()>100) {
-                // Update beginningDate to be last endingDate
-                beginningDate = endingDate;
-
-                endingDate = endingDate.plusDays(10);
-                if(endingDate.isAfter(currentDate))
-                    // Set to current date
-                    endingDate=currentDate;
-
-                // Print status on date range/remaining API
-                System.out.println("[INFO] Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
-                // Recurse with no cursor
+            if(((repoData.getSearch().getRepositoryCount()<700||repoData.getSearch().getRepositoryCount()>1000)&&!endingDate.isEqual(currentDate))||!ranAtLeastOnce) {
+                System.out.println("[INFO] Unoptimized creation period, running optimization...");
+                ranAtLeastOnce=true;
+                dayOptimizer(addedTime);
                 getRepos(null);
+            } else {
+                // For each repo
+                for (int i = 0; i < repoData.getSearch().getRepositories().size(); i++) {
+                    // If there's anything in the default/main branch
+                    if (repoData.getSearch().getRepositories().get(i).getRepo().getMainBranch() != null) {
+
+                        // Init don't ignore repo
+                        Boolean ignoreRepo = false;
+                        // Set a tempRepo var for less code duplication
+                        Repo tempRepo = repoData.getSearch().getRepositories().get(i).getRepo();
+
+                        // List of all languages
+                        List<LanguageInfo> languageList = new ArrayList<>();
+                        // For top 3 languages
+                        for (int j = 0; j < tempRepo.getLanguages().getEdges().size(); j++) {
+                            // Add languages to language list
+                            languageList.add(
+                                    new LanguageInfo(
+                                            tempRepo.getLanguages().getEdges().get(j).getNode().getName(),
+                                            tempRepo.getLanguages().getEdges().get(j).getSize()
+                                    )
+                            );
+                            // If specified language over specified threshold, don't add repo
+                            if (tempRepo.getLanguages().getEdges().get(j).getNode().getName() == language)
+                                if ((tempRepo.getLanguages().getEdges().get(j).getSize() / tempRepo.getLanguages().getTotalSize() < percentLanguage))
+                                    ignoreRepo = true;
+                        }
+
+                        // If the mentionable users is less than the specified amount, ignore repo
+                        if (tempRepo.getMentionableUsers().getTotalCount() < users)
+                            ignoreRepo = true;
+
+                        // If the commit count is less than the specified amount, ignore repo
+                        if (tempRepo.getMainBranch().getTarget().getHistory().getTotalCount() < totalCommit)
+                            ignoreRepo = true;
+
+                        //If not ignored repo, add to repoCollection array
+                        if (!ignoreRepo) {
+                            repoCollection.add(
+                                    new RepoInfo(
+                                            tempRepo.getId(),
+                                            tempRepo.getName(),
+                                            tempRepo.getUrl(),
+                                            tempRepo.getDescription(),
+                                            tempRepo.getPrimaryLanguage().getName(),
+                                            tempRepo.getCreatedAt(),
+                                            tempRepo.getUpdatedAt(),
+                                            tempRepo.getPushedAt(),
+                                            tempRepo.getIsArchived(),
+                                            tempRepo.getIsFork(),
+                                            tempRepo.getIssueUsers().getTotalCount(),
+                                            tempRepo.getMentionableUsers().getTotalCount(),
+                                            tempRepo.getLanguages().getTotalSize(),
+                                            tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
+                                            tempRepo.getForkCount(),
+                                            tempRepo.getStargazerCount(),
+                                            tempRepo.getWatchers().getTotalCount(),
+                                            languageList
+                                    )
+                            );
+                            System.out.println("** Added " + tempRepo.getName() + " (" + tempRepo.getUrl() + ")");
+                        } else
+                            ignoredRepos++;
+                    }
+                }
+
+                try {
+                    // Wait 5 seconds each query to reduce API limits
+                    System.out.println("[INFO] Wait 5 seconds...");
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                    System.out.println("[ERROR] Error trying to wait: \n"+e);
+                }
+
+                // While there is a next page AND you still have at least 100 API calls left
+                if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
+                    // Print status on cursor/remaining API
+                    System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Next Page: "+repoData.getSearch().getPageInfo().getHasNextPage()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
+                    // Recurse with next cursor
+                    getRepos(repoData.getSearch().getPageInfo().getEndCursor());
+                }
+                // After there's no more pages, go to the next chunk until the ending date is after the current date
+                if(endingDate.isBefore(currentDate)&&repoData.getRateLimit().getRemaining()>100) {
+                    // Update beginningDate to be last endingDate
+                    beginningDate = endingDate;
+
+                    endingDate = endingDate.plusDays(addedTime);
+                    if(endingDate.isAfter(currentDate))
+                        // Set to current date
+                        endingDate=currentDate;
+
+                    // Print status on date range/remaining API
+                    System.out.println("[INFO] Date range:"+beginningDate+" to "+endingDate+" :: Remaining API:"+repoData.getRateLimit().getRemaining());
+                    // Recurse with no cursor
+                    getRepos(null);
+                }
             }
         }
     }
@@ -268,6 +311,5 @@ public class RepoGrab {
 
     // Get a single repo's data
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
-
 
 }
