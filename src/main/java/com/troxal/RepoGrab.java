@@ -16,7 +16,6 @@ public class RepoGrab {
     static private String authToken = Config.getAuthToken();
     private String language;
     private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
-    // 20 day chunks, 30 repos/page
     private Integer addedTime=20;
     private Integer amountReturned=40;
     private Boolean ranAtLeastOnce=false;
@@ -38,6 +37,7 @@ public class RepoGrab {
         getRepos(null);
     }
 
+    // Easy GraphQL variable generator
     private String generateVariables(String endCursor){
         // StringBuilder just allows for easier if/else of the variable string
         StringBuilder sb = new StringBuilder();
@@ -90,30 +90,31 @@ public class RepoGrab {
 
         // If no error from API
         if(repoData!=null){
-            if((repoData.getSearch().getRepositoryCount()>=900&&repoData.getSearch().getRepositoryCount()<=1000)||
-                    ((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&repoData.getSearch().getRepositoryCount()<=1000)) {
+            Integer totalRepoCount = repoData.getSearch().getRepositoryCount();
+            if((totalRepoCount>=900&&totalRepoCount<=1000)||
+                    ((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&totalRepoCount<=1000)) {
                 addedTime = days;
                 System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
             }else{
-                if(repoData.getSearch().getRepositoryCount()>1000){
+                if(totalRepoCount>1000){
                     addedTime=days/2;
-                }else if(repoData.getSearch().getRepositoryCount()<900){
+                }else if(totalRepoCount<900){
                     addedTime=days+20;
-                }else if(repoData.getSearch().getRepositoryCount()<800){
+                }else if(totalRepoCount<800){
                     addedTime=days+30;
-                }else if(repoData.getSearch().getRepositoryCount()<700){
+                }else if(totalRepoCount<700){
                     addedTime=days+40;
-                }else if(repoData.getSearch().getRepositoryCount()<600){
+                }else if(totalRepoCount<600){
                     addedTime=days+50;
-                }else if(repoData.getSearch().getRepositoryCount()<500){
+                }else if(totalRepoCount<500){
                     addedTime=days+60;
-                }else if(repoData.getSearch().getRepositoryCount()<400){
+                }else if(totalRepoCount<400){
                     addedTime=days+70;
-                }else if(repoData.getSearch().getRepositoryCount()<300){
+                }else if(totalRepoCount<300){
                     addedTime=days+80;
-                }else if(repoData.getSearch().getRepositoryCount()<200){
+                }else if(totalRepoCount<200){
                     addedTime=days+90;
-                }else if(repoData.getSearch().getRepositoryCount()<100){
+                }else if(totalRepoCount<100){
                     addedTime=days+100;
                 }
                 endingDate=beginningDate.plusDays(addedTime);
@@ -153,13 +154,12 @@ public class RepoGrab {
         // Actually make the query
         Requests data = GitHub.GraphQL(authToken, query, queryVariables);
 
-        // Use HTTP Status responses to determine if we have an error or not
-        // 200 = OK
+        // If we have no error, map
         if(data!=null) {
             // Convert JSON response to Object
             Data repos = jsonToRepo(data.getBody());
             // If no error mapping, return the mapped repos
-            if (repos != null)
+            if (repos!=null)
                 return repos;
             else
                 return null;
