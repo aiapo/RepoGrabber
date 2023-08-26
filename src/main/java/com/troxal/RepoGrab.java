@@ -66,6 +66,7 @@ public class RepoGrab {
         return sb.toString();
     }
 
+    // Optimizes the chunk period so that it will return a chunk that has between 700-1000 repos
     private void dayOptimizer(Integer days){
         try {
             // Wait 2 seconds to comply with API limits
@@ -73,6 +74,7 @@ public class RepoGrab {
         } catch (InterruptedException e) {
             System.out.println("[ERROR] Error trying to wait: \n"+e);
         }
+        // Just get total repos in this chunk
         String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +
                 "rateLimit { cost remaining resetAt } " +
                     "search(query: $queryString, type: REPOSITORY, first: $amountReturned after: $cursorValue) { " +
@@ -80,13 +82,15 @@ public class RepoGrab {
                     "} " +
                 "}";
 
+        // Print out testing period
         System.out.println("[INFO] Optimizer trying period from "+beginningDate+" to "+endingDate);
 
         // Get the data
         Data repoData = queryData(query,null);
 
+        // If no error from API
         if(repoData!=null){
-            //System.out.println("Remaining API: "+repoData.getRateLimit().getRemaining());
+            // If ending date is or is after current date, accept any <1000
             if((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&repoData.getSearch().getRepositoryCount()<=1000){
                 addedTime = days;
                 System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
@@ -106,6 +110,7 @@ public class RepoGrab {
             System.out.println("error with repoData");
     }
 
+    // Converts the JSON response to POJO
     private Data jsonToRepo(String responseData){
         // Create a ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
@@ -127,6 +132,7 @@ public class RepoGrab {
         }
     }
 
+    // Gets the data from the API and error handles API stuff
     private Data queryData(String query,String endCursor){
         String queryVariables = generateVariables(endCursor);
 
@@ -160,6 +166,7 @@ public class RepoGrab {
         }
     }
 
+    // Get all repos from API
     public void getRepos(String endCursor){
         String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +
                 "rateLimit { cost remaining resetAt } " +
