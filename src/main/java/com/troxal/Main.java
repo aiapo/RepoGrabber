@@ -41,7 +41,7 @@ public class Main {
                 System.out.println("Invalid, please enter a number (ex: '20'): ");
             }
         }
-        System.out.println("What is the percentage of the language in the repo wanted? (ex. '50' means at >=50% is language): ");
+        System.out.println("What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ");
         Integer percentLanguage=0;
         success=false;
         while(!success){
@@ -49,7 +49,7 @@ public class Main {
                 percentLanguage = Integer.valueOf(scn.next());
                 success = true;
             }catch(NumberFormatException e){
-                System.out.println("Invalid, please enter a number (ex: '50'): ");
+                System.out.println("Invalid, please enter a number (ex: '51'): ");
             }
         }
         System.out.println("What is minimum amount of commits wanted? (ex. '300'): ");
