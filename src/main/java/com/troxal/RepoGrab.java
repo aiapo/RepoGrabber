@@ -79,12 +79,18 @@ public class RepoGrab {
                         "repositoryCount " +
                     "} " +
                 "}";
+
+        System.out.println("[INFO] Optimizer trying period from "+beginningDate+" to "+endingDate);
+
         // Get the data
         Data repoData = queryData(query,null);
 
         if(repoData!=null){
-            System.out.println("Remaining API: "+repoData.getRateLimit().getRemaining());
-            if(repoData.getSearch().getRepositoryCount()>=700&&repoData.getSearch().getRepositoryCount()<=1000) {
+            //System.out.println("Remaining API: "+repoData.getRateLimit().getRemaining());
+            if((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&repoData.getSearch().getRepositoryCount()<=1000){
+                addedTime = days;
+                System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
+            }else if(repoData.getSearch().getRepositoryCount()>=700&&repoData.getSearch().getRepositoryCount()<=1000) {
                 addedTime = days;
                 System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
             }else if(repoData.getSearch().getRepositoryCount()>1000){
@@ -123,9 +129,6 @@ public class RepoGrab {
 
     private Data queryData(String query,String endCursor){
         String queryVariables = generateVariables(endCursor);
-
-        // For sake of testing, output the current variables
-        System.out.println("[DEBUG] Variables: "+queryVariables);
 
         // Actually make the query
         Requests data = GitHub.GraphQL(authToken, query, queryVariables);
@@ -197,6 +200,10 @@ public class RepoGrab {
                         "} " +
                     "} " +
                 "} " + "} " + "}";
+
+        // For sake of testing, output the current variables
+        System.out.println("[DEBUG] Variables: "+generateVariables(endCursor));
+
         // Get the data
         Data repoData = queryData(query,endCursor);
 
@@ -273,9 +280,9 @@ public class RepoGrab {
                 }
 
                 try {
-                    // Wait 5 seconds each query to reduce API limits
-                    System.out.println("[INFO] Wait 5 seconds...");
-                    TimeUnit.SECONDS.sleep(5);
+                    // Wait 4 seconds each query to reduce API limits
+                    System.out.println("[INFO] Wait 4 seconds...");
+                    TimeUnit.SECONDS.sleep(4);
                 } catch (InterruptedException e) {
                     System.out.println("[ERROR] Error trying to wait: \n"+e);
                 }
