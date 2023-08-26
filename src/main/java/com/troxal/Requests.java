@@ -40,7 +40,8 @@ public class Requests {
                     .connectTimeout(20000)
                     .asJson();
 
-            System.out.println("[DEBUG] Sent POST Request to: "+url);
+            //System.out.println("[DEBUG] Sent POST Request to: "+url);
+
             // Return the headers and the body
             return new Requests(
                     httpResponse.getStatus(),
