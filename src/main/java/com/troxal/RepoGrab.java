@@ -3,8 +3,6 @@ package com.troxal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -157,7 +155,7 @@ public class RepoGrab {
 
         // Use HTTP Status responses to determine if we have an error or not
         // 200 = OK
-        if(data.getStatus()==200) {
+        if(data!=null) {
             // Convert JSON response to Object
             Data repos = jsonToRepo(data.getBody());
             // If no error mapping, return the mapped repos
@@ -165,41 +163,8 @@ public class RepoGrab {
                 return repos;
             else
                 return null;
-        }else if(data.getStatus()==401){
-            System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key in 'keys.config'");
-            return null;
-        // 403 = Forbidden
-        }else if(data.getStatus()==403){
-            Long ghTimeout;
-            if(Integer.valueOf(data.getHeader().getFirst("x-ratelimit-remaining"))==0){
-                ghTimeout = Long.valueOf(data.getHeader().getFirst("x-ratelimit-reset"))-Instant.now().getEpochSecond();
-                System.out.println("[ERROR] You've ran out of API queries, so you have to wait "+ghTimeout+" seconds...\n - Response:\n"+data.getBody());
-            }else{
-                ghTimeout = Long.valueOf(data.getHeader().getFirst("retry-after"));
-                System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting "+ghTimeout+" seconds...\n - Response:\n"+data.getBody());
-            }
-            try {
-                // Wait determined by 'retry-after' seconds to comply with API limits
-                TimeUnit.SECONDS.sleep(ghTimeout);
-            } catch (InterruptedException e) {
-                System.out.println("[ERROR] Error trying to wait: \n"+e);
-            }
-            return null;
-        // 502 = Bad Gateway (this seems to be when GraphQL timeouts)
-        }else if(data.getStatus()==502){
-            System.out.println("[ERROR] A bad response encountered... waiting "+15+" seconds...\n - Response:\n"+data.getBody());
-            try {
-                // Wait 15 seconds to try again
-                TimeUnit.SECONDS.sleep(15);
-            } catch (InterruptedException e) {
-                System.out.println("[ERROR] Error trying to wait: \n"+e);
-            }
-            return null;
-        // Just error if any other status
-        } else{
-            System.out.println("[ERROR] Encountered an error from GitHub: \n - Status:"+data.getStatus()+"\n - Body: "+data.getBody());
-            return null;
         }
+        return null;
     }
 
     // Get all repos from API
