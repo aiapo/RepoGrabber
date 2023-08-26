@@ -18,7 +18,7 @@ public class RepoGrab {
     private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
     // 20 day chunks, 30 repos/page
     private Integer addedTime=20;
-    private Integer amountReturned=45;
+    private Integer amountReturned=40;
     private Boolean ranAtLeastOnce=false;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-01-15"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
@@ -66,11 +66,11 @@ public class RepoGrab {
         return sb.toString();
     }
 
-    // Optimizes the chunk period so that it will return a chunk that has between 700-1000 repos
+    // Optimizes the chunk period so that it will return a chunk that has between 900-1000 repos
     private void dayOptimizer(Integer days){
         try {
-            // Wait 2 seconds to comply with API limits
-            TimeUnit.SECONDS.sleep(2);
+            // Wait 1 seconds to comply with API limits
+            TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
             System.out.println("[ERROR] Error trying to wait: \n"+e);
         }
@@ -90,22 +90,36 @@ public class RepoGrab {
 
         // If no error from API
         if(repoData!=null){
-            // If ending date is or is after current date, accept any <1000
-            if((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&repoData.getSearch().getRepositoryCount()<=1000){
+            if((repoData.getSearch().getRepositoryCount()>=900&&repoData.getSearch().getRepositoryCount()<=1000)||
+                    ((endingDate.isEqual(currentDate)||endingDate.isAfter(currentDate))&&repoData.getSearch().getRepositoryCount()<=1000)) {
                 addedTime = days;
                 System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
-            }else if(repoData.getSearch().getRepositoryCount()>=700&&repoData.getSearch().getRepositoryCount()<=1000) {
-                addedTime = days;
-                System.out.println("[INFO] Landed on "+addedTime+" days for the optimal period.");
-            }else if(repoData.getSearch().getRepositoryCount()>1000){
-                addedTime=days/2;
-                endingDate=beginningDate.plusDays(addedTime);
-                dayOptimizer(addedTime);
             }else{
-                addedTime=days+50;
+                if(repoData.getSearch().getRepositoryCount()>1000){
+                    addedTime=days/2;
+                }else if(repoData.getSearch().getRepositoryCount()<900){
+                    addedTime=days+20;
+                }else if(repoData.getSearch().getRepositoryCount()<800){
+                    addedTime=days+30;
+                }else if(repoData.getSearch().getRepositoryCount()<700){
+                    addedTime=days+40;
+                }else if(repoData.getSearch().getRepositoryCount()<600){
+                    addedTime=days+50;
+                }else if(repoData.getSearch().getRepositoryCount()<500){
+                    addedTime=days+60;
+                }else if(repoData.getSearch().getRepositoryCount()<400){
+                    addedTime=days+70;
+                }else if(repoData.getSearch().getRepositoryCount()<300){
+                    addedTime=days+80;
+                }else if(repoData.getSearch().getRepositoryCount()<200){
+                    addedTime=days+90;
+                }else if(repoData.getSearch().getRepositoryCount()<100){
+                    addedTime=days+100;
+                }
                 endingDate=beginningDate.plusDays(addedTime);
                 dayOptimizer(addedTime);
             }
+
         }else
             System.out.println("error with repoData");
     }
@@ -215,7 +229,7 @@ public class RepoGrab {
         Data repoData = queryData(query,endCursor);
 
         if(repoData!=null){
-            if(((repoData.getSearch().getRepositoryCount()<700||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
+            if(((repoData.getSearch().getRepositoryCount()<800||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
                 System.out.println("[INFO] Unoptimized creation period, running optimization...");
                 ranAtLeastOnce=true;
                 dayOptimizer(addedTime);
@@ -287,9 +301,9 @@ public class RepoGrab {
                 }
 
                 try {
-                    // Wait 4 seconds each query to reduce API limits
-                    System.out.println("[INFO] Wait 4 seconds...");
-                    TimeUnit.SECONDS.sleep(4);
+                    // Wait 3 seconds each query to reduce API limits
+                    System.out.println("[INFO] Wait 3 seconds...");
+                    TimeUnit.SECONDS.sleep(3);
                 } catch (InterruptedException e) {
                     System.out.println("[ERROR] Error trying to wait: \n"+e);
                 }
