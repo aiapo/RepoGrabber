@@ -6,9 +6,9 @@ queries, and clones them for further research.
 For example: 
 
 - **QUERY:** Get all Java primary , >=5000 bytes, repos with 50 stars, have 300 commits,
-created since 2010 that have at least ten users mentionable on them
-- **RETURNS:** 3358 distinct repos to be exported, analysis, cloned, etc
-- **TIME:** ~53 minutes
+created since 2010 that have at least 20 users mentionable on them
+- **RETURNS:** 3277 distinct repos to be exported, analysis, cloned, etc
+- **TIME:** ~45 minutes
 
 *Please note that this example is based on one previous run and is not indicative of what 
 might be in the future/based on different queries.*
