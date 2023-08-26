@@ -9,7 +9,7 @@ For example:
 * CLI find to repos based on:
   * Amount of followers
   * Language
-  * Pushed from a date to now
+  * Created from a date to now
   * Percentage of bytes language repo comprises
   * Mentionable users
   * Total commits over lifetime

@@ -48,8 +48,8 @@ public class RepoGrab {
         if(totalSize!=null) {
             sb.append(" size:>="+totalSize);
         }
-        // Set the beginning to ending push dates
-        sb.append(" pushed:");
+        // Set the beginning to ending created dates
+        sb.append(" created:");
         sb.append(beginningDate+".."+endingDate);
         // Always 50 returned, it's supposed to allow 100, but I couldn't get that to work
         if(amountReturned!=null)
