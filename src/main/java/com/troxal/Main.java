@@ -90,12 +90,13 @@ public class Main {
         RepoGrab rg = new RepoGrab(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate);
         System.out.println("\n** Grabbed repos!");
 
-        while(menuChoice!=4){
+        while(menuChoice!=5){
             System.out.println("** Menu: **" +
                     "\n 1. Print all repos" +
                     "\n 2. Clone all repos"+
                     "\n 3. Export to CSV"+
-                    "\n 4. Exit\n");
+                    "\n 4. Run RefMiner"+
+                    "\n 5. Exit\n");
             System.out.println("Choice: ");
             menuChoice = Integer.valueOf(scn.next());
             switch(menuChoice){
@@ -109,6 +110,8 @@ public class Main {
                     CSVManip.createCSV(rg.getRepos());
                     break;
                 case 4:
+                    RefMine.calculate(rg.getRepos());
+                case 5:
                     break;
             }
         }

@@ -24,7 +24,7 @@ public class GitHub {
             return data;
         // 401 = Unauthorized
         }else if(data.getStatus()==401){
-            System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key in 'keys.config'");
+            System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key in 'github-oauth.properties'");
             return null;
         // 403 = Forbidden
         }else if(data.getStatus()==403){

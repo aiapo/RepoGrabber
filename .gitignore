@@ -40,8 +40,11 @@ build/
 ### Cloned Repos ###
 /repos/*
 
+### RefMiner Results ###
+/results/*
+
 ### Auth Keys ###
-keys.config
+github-oauth.properties
 
 ### Repos CSV ###
 Repos.csv

@@ -25,18 +25,18 @@ might be in the future/based on different queries.*
 * Grabs straight from GitHub's GraphQL API
 * Clones repos
 * Lists repos
+* Integration with RefMiner
 * Output to CSV
 
 ## Planned:
 * Maybe a GUI
 * Import CSV to skip querying GitHub
-* Integration with RefMiner
 * Maybe improve time to retrieve if possible
 * Cleaner code
 * and more!
 
 ## Keep in mind
-* You need to specify your own GitHub API in keys.config, follow sample
+* You need to specify your own GitHub API in github-oauth.properties, follow sample
 * Every GraphQL call can only get 1,000 repos total
   * So we chunk by creation date
     * There is an optimization algorithm that should make it so that each query
