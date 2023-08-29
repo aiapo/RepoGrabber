@@ -54,7 +54,7 @@ public class Requests {
         }
     }
 
-    // POST with just authToken
+    // GET with authToken
     public static Requests get(String url,String authToken){
         try {
             // Use Unirest to GET
