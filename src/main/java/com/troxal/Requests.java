@@ -29,11 +29,11 @@ public class Requests {
         return body;
     }
 
-    // POST request with an authToken, body and timeout
+    // POST request with an authToken and body
     public static Requests post(String url,String authToken,String body) {
         try {
             // Use Unirest to POST
-            // Incluses GraphQL endpoint, auth token, query and variables
+            // Includes url, auth token, body
             HttpResponse<JsonNode> httpResponse = Unirest.post(url)
                     .header("Authorization", "Bearer " + authToken)
                     .body(body)
@@ -54,4 +54,27 @@ public class Requests {
         }
     }
 
+    // POST with just authToken
+    public static Requests get(String url,String authToken){
+        try {
+            // Use Unirest to GET
+            // Includes url, auth token
+            HttpResponse<JsonNode> httpResponse = Unirest.get(url)
+                    .header("Authorization", "Bearer " + authToken)
+                    .connectTimeout(20000)
+                    .asJson();
+
+            //System.out.println("[DEBUG] Sent GET Request to: "+url);
+
+            // Return the headers and the body
+            return new Requests(
+                    httpResponse.getStatus(),
+                    httpResponse.getHeaders(),
+                    httpResponse.getBody().getObject().toString(4)
+            );
+        } catch (UnirestException e) {
+            System.out.println("** Unirest had an error: \n - "+e+"\n - URL: "+url+"\n - Auth: "+authToken);
+            return new Requests(400,null,"Unirest Error, see previous log.");
+        }
+    }
 }

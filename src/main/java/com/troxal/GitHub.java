@@ -7,17 +7,16 @@ public class GitHub {
     // Query GraphQL API, returns headers and body
     public static Requests GraphQL(String authToken, String query, String variables){
         String body = "{\"query\": \""+query+"\","+"\"variables\": "+variables+"}";
-        return post(authToken,body);
+        return apiHandler(Requests.post("https://api.github.com/graphql",authToken,body));
     }
 
     // Query REST API, returns headers and body
-    public Requests REST(String authToken,String query){
-        //TODO: Implement REST API
-        return null;
+    public static Requests REST(String authToken,String query){
+        return apiHandler(Requests.get("https://api.github.com"+query,authToken));
     }
 
-    private static Requests post(String authToken, String body){
-        Requests data = Requests.post("https://api.github.com/graphql",authToken,body);
+    // Handle the requests
+    private static Requests apiHandler(Requests data){
         // Use HTTP Status responses to determine if we have an error or not
         // 200 = OK
         if(data.getStatus()==200) {
@@ -29,6 +28,7 @@ public class GitHub {
         // 403 = Forbidden
         }else if(data.getStatus()==403){
             Long ghTimeout;
+            // If no rate calls left
             if(Integer.valueOf(data.getHeader().getFirst("x-ratelimit-remaining"))==0){
                 ghTimeout = Long.valueOf(data.getHeader().getFirst("x-ratelimit-reset"))- Instant.now().getEpochSecond();
                 System.out.println("[ERROR] You've ran out of API queries, so you have to wait "+ghTimeout+" seconds...\n - Response:\n"+data.getBody());
@@ -59,5 +59,4 @@ public class GitHub {
             return null;
         }
     }
-
 }
