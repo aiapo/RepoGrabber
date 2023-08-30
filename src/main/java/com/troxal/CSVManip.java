@@ -1,28 +1,38 @@
 package com.troxal;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CSVManip {
     // Create CSV of all repos
     public static void createCSV(List<RepoInfo> repos){
+        // Open 'Repos.csv'
         File file = new File("Repos.csv");
         try
         {
+            // Use CSVWriter to create a new CSV
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
+            // Write header stuff
             String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language","Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages"};
             writer.writeNext(headerTxt);
 
+            // For all repos, import into a row
             for(int i=0;i<repos.size();i++){
+                // Language stuff to make each language a single row (ex: 'Java:378030 Shell:2612 C++:2566')
                 StringBuilder sb = new StringBuilder();
                 for(int j=0;j<repos.get(i).getLanguages().size();j++)
                     sb.append(repos.get(i).getLanguages().get(j).toString());
 
+                // Build row
                 String tempLine[] = new String[]{
                         repos.get(i).getId(),
                         repos.get(i).getName(),
@@ -43,14 +53,91 @@ public class CSVManip {
                         String.valueOf(repos.get(i).getWatchCount()),
                         sb.toString()
                 };
+
+                // Write row to CSV
                 writer.writeNext(tempLine);
             }
 
+            // Close writer
             writer.close();
         }
+
+        // Print error
         catch (IOException e)
         {
             e.printStackTrace();
+        }
+    }
+
+    // Read CSV, returns list of repos back
+    // TODO: Fix because it's all messed up right now
+    public static List<RepoInfo> readCSV() {
+        List<RepoInfo> repos = new ArrayList<>();
+        try {
+            // Open 'Repos.csv'
+            FileReader filereader = new FileReader("Repos.csv");
+
+            // Skip header
+            CSVReader reader = new CSVReaderBuilder(filereader)
+                    .withSkipLines(1)
+                    .build();
+
+            // Use csvReader to read in CSV
+            List<String[]> csvData = reader.readAll();
+
+            System.out.println(csvData.size());
+
+            // Read all rows of the CSV
+            for (int i=0;i<csvData.size();i++) {
+                // Languages are stored seperated by a space in CSV, so split
+                String[] languages = csvData.get(i)[17].split("' ");
+                // tempLanguage to read into RepoInfo
+                List<LanguageInfo> tempLanguages = new ArrayList<>();
+                // Then the name and size are seperated by a colon
+                for (int j = 0; j < languages.length; j++) {
+                    String[] tempLanguage = languages[j].split(":");
+                    for(int k=0;k<tempLanguage.length;k++)
+                        System.out.println(i+": tempLanguage["+k+"]: "+tempLanguage[k]);
+                    // Add to tempLanguage the language
+                    tempLanguages.add(new LanguageInfo(tempLanguage[0],Integer.valueOf(tempLanguage[1])));
+                }
+
+                // Temp RepoInfo, all rows (except tempLanguages) correspond to their value
+                RepoInfo tempRepo = new RepoInfo(
+                        csvData.get(i)[0],
+                        csvData.get(i)[1],
+                        csvData.get(i)[2],
+                        csvData.get(i)[3],
+                        csvData.get(i)[4],
+                        csvData.get(i)[5],
+                        csvData.get(i)[6],
+                        csvData.get(i)[7],
+                        Boolean.parseBoolean(csvData.get(i)[8]),
+                        Boolean.parseBoolean(csvData.get(i)[9]),
+                        Integer.valueOf(csvData.get(i)[10]),
+                        Integer.valueOf(csvData.get(i)[11]),
+                        Integer.valueOf(csvData.get(i)[12]),
+                        Integer.valueOf(csvData.get(i)[13]),
+                        Integer.valueOf(csvData.get(i)[14]),
+                        Integer.valueOf(csvData.get(i)[15]),
+                        Integer.valueOf(csvData.get(i)[16]),
+                        tempLanguages
+                );
+
+                // Add the repos to the repo list
+                repos.add(tempRepo);
+            }
+
+            // Close reader
+            reader.close();
+
+            // Return the new repo list
+            return repos;
+
+        // Or error & return null -> needs handler
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
