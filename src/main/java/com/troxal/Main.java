@@ -1,5 +1,7 @@
 package com.troxal;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
@@ -8,7 +10,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import static java.lang.System.exit;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Integer menuChoice = 0;
         Boolean success = false;
         RepoGrab rg = null;
@@ -154,7 +156,16 @@ public class Main {
                     Clone.cloneRepos(rg.getRepos());
                     break;
                 case 3:
-                    CSV.create(rg.getRepos());
+                    CSVManip.createCSV(rg.getRepos());
+                    try{
+                        FileWriter paramWrite = new FileWriter(CSVManip.fileName+ "_parameters.txt");
+                        paramWrite.write("Min Followers: " + followers + "\nLanguage: " + languages +
+                                "\nMin Mentionable Users: " + users + " \nPercent of Language: " + percentLanguage +
+                                "\nMin Commits: " + totalCommit + "\nMin Size in Bytes: " + totalSize + "\nStart Date: " + sDate);
+                        paramWrite.close();
+                    } catch(IOException e) {
+                        System.out.println("Parameter error");
+                    }
                     break;
                 case 4:
                     RefMine.calculate(rg.getRepos());
