@@ -298,9 +298,9 @@ public class RepoGrab {
                 }
 
                 try {
-                    // Wait 2 seconds each query to reduce API limits
-                    System.out.println("[INFO] Wait 2 seconds...");
-                    TimeUnit.SECONDS.sleep(2);
+                    // Wait 3 seconds each query to reduce API limits
+                    System.out.println("[INFO] Wait 3 seconds...");
+                    TimeUnit.SECONDS.sleep(3);
                 } catch (InterruptedException e) {
                     System.out.println("[ERROR] Error trying to wait: \n"+e);
                 }
