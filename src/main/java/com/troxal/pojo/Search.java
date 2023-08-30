@@ -1,5 +1,5 @@
 
-package com.troxal;
+package com.troxal.pojo;
 
 import java.util.List;
 import javax.annotation.Generated;

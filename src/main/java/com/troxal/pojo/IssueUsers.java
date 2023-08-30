@@ -1,5 +1,5 @@
 
-package com.troxal;
+package com.troxal.pojo;
 
 import javax.annotation.Generated;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "totalCount"
 })
 @Generated("jsonschema2pojo")
-public class Watchers {
+public class IssueUsers {
 
     @JsonProperty("totalCount")
     private Integer totalCount;

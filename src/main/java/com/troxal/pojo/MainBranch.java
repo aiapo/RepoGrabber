@@ -1,5 +1,5 @@
 
-package com.troxal;
+package com.troxal.pojo;
 
 import javax.annotation.Generated;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,22 +8,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "repo"
+    "target"
 })
 @Generated("jsonschema2pojo")
-public class Repository {
+public class MainBranch {
 
-    @JsonProperty("repo")
-    private Repo repo;
+    @JsonProperty("target")
+    private Target target;
 
-    @JsonProperty("repo")
-    public Repo getRepo() {
-        return repo;
+    @JsonProperty("target")
+    public Target getTarget() {
+        return target;
     }
 
-    @JsonProperty("repo")
-    public void setRepo(Repo repo) {
-        this.repo = repo;
+    @JsonProperty("target")
+    public void setTarget(Target target) {
+        this.target = target;
     }
 
 }

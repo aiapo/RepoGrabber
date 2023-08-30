@@ -1,5 +1,5 @@
 
-package com.troxal;
+package com.troxal.pojo;
 
 import javax.annotation.Generated;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,22 +8,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "name"
+    "history"
 })
 @Generated("jsonschema2pojo")
-public class PrimaryLanguage {
+public class Target {
 
-    @JsonProperty("name")
-    private String name;
+    @JsonProperty("history")
+    private History history;
 
-    @JsonProperty("name")
-    public String getName() {
-        return name;
+    @JsonProperty("history")
+    public History getHistory() {
+        return history;
     }
 
-    @JsonProperty("name")
-    public void setName(String name) {
-        this.name = name;
+    @JsonProperty("history")
+    public void setHistory(History history) {
+        this.history = history;
     }
 
 }

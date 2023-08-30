@@ -1,4 +1,4 @@
-package com.troxal;
+package com.troxal.request;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -30,7 +30,7 @@ public class Requests {
     }
 
     // POST request with an authToken and body
-    public static Requests post(String url,String authToken,String body) {
+    public static Requests post(String url, String authToken, String body) {
         try {
             // Use Unirest to POST
             // Includes url, auth token, body
@@ -55,7 +55,7 @@ public class Requests {
     }
 
     // GET with authToken
-    public static Requests get(String url,String authToken){
+    public static Requests get(String url, String authToken){
         try {
             // Use Unirest to GET
             // Includes url, auth token

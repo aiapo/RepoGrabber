@@ -24,7 +24,6 @@ public class LanguageInfo {
     }
 
     @Override
-    public String toString() {
-        return getName()+":"+getSize()+" ";
+    public String toString() {return getName()+":"+getSize()+"' ";
     }
 }
