@@ -96,8 +96,6 @@ public class CSVManip {
                 // Then the name and size are seperated by a colon
                 for (int j = 0; j < languages.length; j++) {
                     String[] tempLanguage = languages[j].split(":");
-                    for(int k=0;k<tempLanguage.length;k++)
-                        System.out.println(i+": tempLanguage["+k+"]: "+tempLanguage[k]);
                     // Add to tempLanguage the language
                     tempLanguages.add(new LanguageInfo(tempLanguage[0],Integer.valueOf(tempLanguage[1])));
                 }
