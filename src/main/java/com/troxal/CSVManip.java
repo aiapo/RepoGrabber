@@ -11,6 +11,7 @@ public static String fileName;
     // Create CSV of all repos
     public static void createCSV(List<RepoInfo> repos) {
 
+        //Allows user to input filename for CSV and fixes any illegal characters
         System.out.println("Enter a name for the file here: ");
         Scanner fileInput = new Scanner(System.in);
         fileName = fileInput.nextLine();

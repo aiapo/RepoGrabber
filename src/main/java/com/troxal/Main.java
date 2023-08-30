@@ -157,6 +157,8 @@ public class Main {
                     break;
                 case 3:
                     CSVManip.createCSV(rg.getRepos());
+
+                    // Uses given file name to create a txt file for provided parameters for future reference
                     try{
                         FileWriter paramWrite = new FileWriter(CSVManip.fileName+ "_parameters.txt");
                         paramWrite.write("Min Followers: " + followers + "\nLanguage: " + languages +
