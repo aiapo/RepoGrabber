@@ -1,4 +1,4 @@
-package com.troxal;
+package com.troxal.pojo;
 
 public class LanguageInfo {
     private String name;

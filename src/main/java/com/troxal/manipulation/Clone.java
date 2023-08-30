@@ -1,7 +1,6 @@
 package com.troxal.manipulation;
 
-import com.troxal.FileNameCleaner;
-import com.troxal.RepoInfo;
+import com.troxal.pojo.RepoInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -16,7 +15,7 @@ public class Clone {
         // We need to try/catch git issues
         try{
             // Get clean name for Windows
-            String cleanPath = FileNameCleaner.cleanFileName(name);
+            String cleanPath = name.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
             // Clone repo with JGit
             Git.cloneRepository()
                     .setNoCheckout(true)

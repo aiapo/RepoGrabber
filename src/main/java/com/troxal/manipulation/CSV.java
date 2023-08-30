@@ -3,8 +3,8 @@ package com.troxal.manipulation;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
-import com.troxal.LanguageInfo;
-import com.troxal.RepoInfo;
+import com.troxal.pojo.LanguageInfo;
+import com.troxal.pojo.RepoInfo;
 
 import java.io.File;
 import java.io.FileReader;
@@ -86,7 +86,7 @@ public class CSV {
             // Use csvReader to read in CSV
             List<String[]> csvData = reader.readAll();
 
-            System.out.println(csvData.size());
+            System.out.println("Imported "+csvData.size()+" repos!");
 
             // Read all rows of the CSV
             for (int i=0;i<csvData.size();i++) {

@@ -1,4 +1,6 @@
-package com.troxal;
+package com.troxal.pojo;
+
+import com.troxal.pojo.LanguageInfo;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.troxal.manipulation;
 
-import com.troxal.RepoInfo;
+import com.troxal.pojo.RepoInfo;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Repository;
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
