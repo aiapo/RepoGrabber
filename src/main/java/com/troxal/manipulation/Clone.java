@@ -1,5 +1,7 @@
-package com.troxal;
+package com.troxal.manipulation;
 
+import com.troxal.FileNameCleaner;
+import com.troxal.RepoInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;

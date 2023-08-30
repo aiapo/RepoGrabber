@@ -1,6 +1,9 @@
 package com.troxal;
 
 import java.util.Scanner;
+import com.troxal.manipulation.CSV;
+import com.troxal.manipulation.Clone;
+import com.troxal.manipulation.RefMine;
 
 public class Main {
     public static void main(String[] args) {
@@ -128,7 +131,7 @@ public class Main {
                     Clone.cloneRepos(rg.getRepos());
                     break;
                 case 3:
-                    CSVManip.createCSV(rg.getRepos());
+                    CSV.create(rg.getRepos());
                     break;
                 case 4:
                     RefMine.calculate(rg.getRepos());

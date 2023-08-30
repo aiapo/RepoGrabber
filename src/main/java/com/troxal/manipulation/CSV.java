@@ -1,8 +1,10 @@
-package com.troxal;
+package com.troxal.manipulation;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
+import com.troxal.LanguageInfo;
+import com.troxal.RepoInfo;
 
 import java.io.File;
 import java.io.FileReader;
@@ -11,9 +13,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CSVManip {
+public class CSV {
     // Create CSV of all repos
-    public static void createCSV(List<RepoInfo> repos){
+    public static void create(List<RepoInfo> repos){
         // Open 'Repos.csv'
         File file = new File("Repos.csv");
         try
@@ -70,8 +72,7 @@ public class CSVManip {
     }
 
     // Read CSV, returns list of repos back
-    // TODO: Fix because it's all messed up right now
-    public static List<RepoInfo> readCSV() {
+    public static List<RepoInfo> read() {
         List<RepoInfo> repos = new ArrayList<>();
         try {
             // Open 'Repos.csv'
@@ -132,7 +133,7 @@ public class CSVManip {
             // Return the new repo list
             return repos;
 
-        // Or error & return null -> needs handler
+            // Or error & return null -> needs handler
         } catch (Exception e) {
             e.printStackTrace();
             return null;

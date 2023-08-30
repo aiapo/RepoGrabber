@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import com.troxal.request.Requests;
 import com.troxal.pojo.*;
+import com.troxal.manipulation.CSV;
 
 public class RepoGrab {
     // Initialize variables
@@ -41,7 +42,7 @@ public class RepoGrab {
 
     // Import CSV constructor
     public RepoGrab(){
-        repoCollection = new HashSet<>(CSVManip.readCSV());
+        repoCollection = new HashSet<>(CSV.read());
     }
 
     // Easy GraphQL variable generator
