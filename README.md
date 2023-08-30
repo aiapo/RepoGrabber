@@ -22,15 +22,15 @@ might be in the future/based on different queries.*
   * Mentionable users
   * Total commits over lifetime
   * Total bytes
-* Grabs straight from GitHub's GraphQL API
+* Grabs straight from GitHub's GraphQL/REST APIs
 * Clones repos
 * Lists repos
-* Integration with RefMiner
+* Integration with RefMiner to show output all refactorings to JSON
 * Output to CSV
+* Import from CSV, skip new query (that RepoGrab made previously)
 
 ## Planned:
 * Maybe a GUI
-* Import CSV to skip querying GitHub
 * Maybe improve time to retrieve if possible
 * Cleaner code
 * and more!
