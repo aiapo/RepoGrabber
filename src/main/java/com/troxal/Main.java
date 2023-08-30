@@ -16,6 +16,8 @@ public class Main {
         RepoGrab rg = null;
         String importCSV="",languages="",sDate="",menuOrder="";
         Integer followers=0,users=0,percentLanguage=0,totalCommit=0,totalSize=0,i=0;
+        boolean newQuery = true;
+        while (newQuery) {
 
         System.out.println("-- Welcome to RepoGrabber! --\n");
 
@@ -129,54 +131,58 @@ public class Main {
         }
         System.out.println("\n** Grabbed repos!");
 
-        while(menuChoice!=5){
-            if(menuOrder=="") {
-                System.out.println("** Menu: **" +
-                        "\n 1. Print all repos" +
-                        "\n 2. Clone all repos" +
-                        "\n 3. Export to CSV" +
-                        "\n 4. Run RefMiner" +
-                        "\n 5. Exit\n");
-                System.out.println("Choice: ");
-                Scanner scn = new Scanner(System.in);
-                menuChoice = Integer.valueOf(scn.next());
-            }else{
-                String[] menuOrderS = menuOrder.split(",");
-                if(i<menuOrderS.length){
-                    menuChoice = Integer.valueOf(menuOrderS[i]);
-                    i++;
-                }else
-                    exit(0);
-            }
-            switch(menuChoice){
-                case 1:
-                    System.out.println(rg.getRepos());
-                    break;
-                case 2:
-                    Clone.cloneRepos(rg.getRepos());
-                    break;
-                case 3:
-                    CSVManip.createCSV(rg.getRepos());
+            while (menuChoice != 5 && menuChoice != 6) {
+                if(menuOrder=="") {
 
-                    // Uses given file name to create a txt file for query metadata
-                    try{
-                        FileWriter paramWrite = new FileWriter(CSVManip.fileName+ "_metadata.txt");
-                        paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
-                                "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
-                                "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
-                                "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
-                                "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now());
-                        paramWrite.close();
-                    } catch(IOException e) {
-                        System.out.println("Parameter error");
-                    }
-                    break;
-                case 4:
-                    RefMine.calculate(rg.getRepos());
-                    break;
-                case 5:
-                    break;
-            }
+                    System.out.println("** Menu: **" +
+                            "\n 1. Print all repos" +
+                            "\n 2. Clone all repos" +
+                            "\n 3. Export to CSV" +
+                            "\n 4. Run RefMiner" +
+                            "\n 5. New Query" +
+                            "\n 6. Exit\n");
+                    System.out.println("Choice: ");
+                    Scanner scn = new Scanner(System.in);
+                    menuChoice = Integer.valueOf(scn.next());
+                } else {
+                    String[] menuOrderS = menuOrder.split(",");
+                    if(i<menuOrderS.length){
+                        menuChoice = Integer.valueOf(menuOrderS[i]);
+                        i++;
+                    }else
+                        exit(0);
+                }
+                switch (menuChoice) {
+                    case 1:
+                        System.out.println(rg.getRepos());
+                        break;
+                    case 2:
+                        Clone.cloneRepos(rg.getRepos());
+                        break;
+                    case 3:
+                        CSVManip.createCSV(rg.getRepos());
+                        // Uses given file name to create a txt file for query metadata
+                        try {
+                            FileWriter paramWrite = new FileWriter(CSVManip.fileName + "_metadata.txt");
+                            paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
+                                    "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
+                                    "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
+                                    "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
+                                    "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now());
+                            paramWrite.close();
+                        } catch (IOException e) {
+                            System.out.println("Metadata output error");
+                        }
+                        break;
+                    case 4:
+                        RefMine.calculate(rg.getRepos());
+                    case 5:
+                        break;
+                    case 6:
+                        newQuery = false;
+                        break;
+                }
+
         }
 
     }
