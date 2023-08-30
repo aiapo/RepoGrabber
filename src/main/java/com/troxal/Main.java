@@ -96,7 +96,7 @@ public class Main {
             System.out.println("** Menu: **" +
                     "\n 1. Print all repos" +
                     "\n 2. Clone all repos"+
-                    "\n 3. Export to CSV"+
+                    "\n 3. Export to CSV" +
                     "\n 4. Exit\n");
             System.out.println("Choice: ");
             menuChoice = Integer.valueOf(scn.next());
@@ -110,12 +110,14 @@ public class Main {
                 case 3:
                     CSVManip.createCSV(rg.getRepos());
 
-                    // Uses given file name to create a txt file for provided parameters for future reference
+                    // Uses given file name to create a txt file for query metadata
                     try{
-                        FileWriter paramWrite = new FileWriter(CSVManip.fileName+ "_parameters.txt");
-                        paramWrite.write("Min Followers: " + followers + "\nLanguage: " + languages +
-                                "\nMin Mentionable Users: " + users + " \nPercent of Language: " + percentLanguage +
-                                "\nMin Commits: " + totalCommit + "\nMin Size in Bytes: " + totalSize + "\nStart Date: " + sDate);
+                        FileWriter paramWrite = new FileWriter(CSVManip.fileName+ "_metadata.txt");
+                        paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
+                                "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
+                                "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
+                                "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
+                                "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now());
                         paramWrite.close();
                     } catch(IOException e) {
                         System.out.println("Parameter error");
