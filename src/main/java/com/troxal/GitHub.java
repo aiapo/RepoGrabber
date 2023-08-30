@@ -2,6 +2,7 @@ package com.troxal;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import com.troxal.request.Requests;
 
 public class GitHub {
     // Query GraphQL API, returns headers and body

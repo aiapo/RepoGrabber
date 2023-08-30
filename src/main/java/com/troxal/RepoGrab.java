@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import com.troxal.request.Requests;
+import com.troxal.pojo.*;
 
 public class RepoGrab {
     // Initialize variables
@@ -35,6 +37,11 @@ public class RepoGrab {
         this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
 
         getRepos(null);
+    }
+
+    // Import CSV constructor
+    public RepoGrab(){
+        repoCollection = new HashSet<>(CSVManip.readCSV());
     }
 
     // Easy GraphQL variable generator
