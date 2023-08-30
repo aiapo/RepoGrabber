@@ -20,7 +20,7 @@ public class RepoGrab {
     // Initialize variables
     static private String authToken = Config.getAuthToken();
     private String language;
-    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
+    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0, addedRepos = 0;
     private Integer addedTime=20;
     private Integer amountReturned=35;
     private Boolean ranAtLeastOnce=false;
@@ -276,6 +276,7 @@ public class RepoGrab {
                                     )
                             );
                             System.out.println("** Added " + tempRepo.getName() + " (" + tempRepo.getUrl() + ")");
+                            addedRepos++;
                         } else
                             ignoredRepos++;
                     }
@@ -320,5 +321,12 @@ public class RepoGrab {
 
     // Get a single repo's data
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
+
+    public int getIgnoredRepos(){
+        return ignoredRepos;
+    }
+    public int getAddedRepos(){
+        return addedRepos;
+    }
 
 }
