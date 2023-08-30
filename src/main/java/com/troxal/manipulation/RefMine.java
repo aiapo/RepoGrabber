@@ -51,7 +51,7 @@ public class RefMine {
             }
 
             // Run RefMiner
-            miner.detectAll(repo, "master", new RefactoringHandler() {
+            miner.detectAll(repo, null, new RefactoringHandler() {
                 private int commitCount = 0;
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
