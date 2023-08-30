@@ -2,25 +2,30 @@ package com.troxal;
 
 import com.opencsv.CSVWriter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
+import java.util.Scanner;
 
 public class CSVManip {
+public static String fileName;
     // Create CSV of all repos
-    public static void createCSV(List<RepoInfo> repos){
-        File file = new File("Repos.csv");
-        try
-        {
+    public static void createCSV(List<RepoInfo> repos) {
+
+        System.out.println("Enter a name for the file here: ");
+        Scanner fileInput = new Scanner(System.in);
+        fileName = fileInput.nextLine();
+        fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+        File file = new File(fileName + ".csv");
+
+        try {
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
-            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language","Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages"};
+            String[] headerTxt = {"Github ID", "Repository Name", "Github Link", "Description", "Primary Language", "Creation Date", "Update Date", "Push Date", "Is Archived", "Is Fork", "Mentionable Users", "Issue Users", "Total Size", "Total Commits", "Forks", "Stars", "Watchers", "Languages"};
             writer.writeNext(headerTxt);
 
-            for(int i=0;i<repos.size();i++){
+            for (int i = 0; i < repos.size(); i++) {
                 StringBuilder sb = new StringBuilder();
-                for(int j=0;j<repos.get(i).getLanguages().size();j++)
+                for (int j = 0; j < repos.get(i).getLanguages().size(); j++)
                     sb.append(repos.get(i).getLanguages().get(j).toString());
 
                 String tempLine[] = new String[]{
@@ -47,10 +52,13 @@ public class CSVManip {
             }
 
             writer.close();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public String getFileName(){
+        return fileName;
+    }
+
 }
