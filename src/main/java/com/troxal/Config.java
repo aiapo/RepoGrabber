@@ -2,6 +2,9 @@ package com.troxal;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Scanner;
 
 /**
@@ -16,7 +19,13 @@ public class Config {
             scanner = new Scanner(new File("github-oauth.properties"));
             return scanner.nextLine();
         } catch (FileNotFoundException ex) {
-            throw new RuntimeException(ex);
+            System.out.println("File not found: "+ex);
+            try {
+                Files.createFile(Path.of("github-oauth.properties"));
+            }catch(IOException e){
+                System.out.println("Can't create authKey file: "+e);
+            }
+            return "NOAUTHKEY";
         }
     }
 }
