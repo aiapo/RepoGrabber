@@ -108,24 +108,8 @@ public class RepoGrab {
             }else{
                 if(totalRepoCount>1000){
                     addedTime=days/2;
-                }else if(totalRepoCount<900){
-                    addedTime=days+20;
-                }else if(totalRepoCount<800){
-                    addedTime=days+30;
-                }else if(totalRepoCount<700){
-                    addedTime=days+40;
-                }else if(totalRepoCount<600){
-                    addedTime=days+50;
-                }else if(totalRepoCount<500){
-                    addedTime=days+60;
-                }else if(totalRepoCount<400){
-                    addedTime=days+70;
-                }else if(totalRepoCount<300){
-                    addedTime=days+80;
-                }else if(totalRepoCount<200){
-                    addedTime=days+90;
-                }else if(totalRepoCount<100){
-                    addedTime=days+100;
+                }else{
+                    addedTime=days+(100-(totalRepoCount/10));
                 }
                 endingDate=beginningDate.plusDays(addedTime);
                 dayOptimizer(addedTime);
