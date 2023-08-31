@@ -17,7 +17,7 @@ public class CSV {
     // Create CSV of all repos
     public static void create(List<RepoInfo> repos){
         // Open 'Repos.csv'
-        File file = new File("Repos.csv");
+        File file = new File("results/Repos.csv");
         try
         {
             // Use CSVWriter to create a new CSV
@@ -76,7 +76,7 @@ public class CSV {
         List<RepoInfo> repos = new ArrayList<>();
         try {
             // Open 'Repos.csv'
-            FileReader filereader = new FileReader("Repos.csv");
+            FileReader filereader = new FileReader("results/Repos.csv");
 
             // Skip header
             CSVReader reader = new CSVReaderBuilder(filereader)
