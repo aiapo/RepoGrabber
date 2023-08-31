@@ -30,6 +30,7 @@ might be in the future/based on different queries.*
 * Import from CSV, skip new query (that RepoGrab made previously)
 
 ## Planned:
+* Run using Docker (in progress)
 * Maybe a GUI
 * Maybe improve time to retrieve if possible
 * Cleaner code
