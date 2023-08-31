@@ -133,10 +133,10 @@ public class CSV {
             // Return the new repo list
             return repos;
 
-            // Or error & return null -> needs handler
+            // Or error & return repos empty
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return repos;
         }
     }
 }
