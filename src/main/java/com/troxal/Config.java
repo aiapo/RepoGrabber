@@ -1,11 +1,10 @@
 package com.troxal;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
 
 /**
  * Class: Config
@@ -14,10 +13,14 @@ import java.util.Scanner;
 public class Config {
     // Just gets the API key from config/github-oauth.properties
     public static String getAuthToken() {
-        Scanner scanner;
         try {
-            scanner = new Scanner(new File("config/github-oauth.properties"));
-            return scanner.nextLine();
+            FileReader filereader = new FileReader("config/github-oauth.properties");
+            int i;
+            StringBuilder sb = new StringBuilder();
+            while ((i = filereader.read()) != -1) {
+                sb.append((char)i);
+            }
+            return sb.toString();
         } catch (FileNotFoundException ex) {
             System.out.println("File not found: "+ex);
             try {
@@ -26,6 +29,9 @@ public class Config {
                 System.out.println("Can't create authKey file: "+e);
             }
             return "NOAUTHKEY";
+        } catch (IOException e) {
+            System.out.println("Error reading file: "+e);
+            return "INVALIDAUTHKEY";
         }
     }
 }
