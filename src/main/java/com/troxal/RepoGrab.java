@@ -22,7 +22,7 @@ public class RepoGrab {
     private String language;
     private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
     private Integer addedTime=20;
-    private Integer amountReturned=40;
+    private Integer amountReturned=35;
     private Boolean ranAtLeastOnce=false;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-01-15"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
