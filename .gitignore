@@ -45,3 +45,6 @@ build/
 
 ### Auth Keys ###
 config/github-oauth.properties
+
+### .env ###
+config/.env

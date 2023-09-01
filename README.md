@@ -47,3 +47,23 @@ might be in the future/based on different queries.*
     * So there is pagination of every query chunked into 40 repos/query
 * There is a 3 seconds wait every query to prevent secondary rate limits
 * The code is a bit messy, hope to clean it up soon
+
+## Docker usage
+You can now run RepoGrabber through Docker. The future idea is for there to be a web server
+to do everything but currently there's just a .env file in /config that you can fill out
+to run in docker.
+
+You need to fill out this .env file because it will take your variables and run RepoGrabber, then
+exit.
+
+To build docker image:
+```
+docker build -t repograbber . 
+```
+
+To run CLI:
+(add -d if you want to run in the background)
+```
+docker run --name repograbber -v "/yourconfigdir:/config" -v "/yourreposdir:/repos" -v 
+"/yourresultsdir:/results" repograbber
+```
