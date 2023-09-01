@@ -26,7 +26,7 @@ public class CSV {
         Scanner fileInput = new Scanner(System.in);
         fileName = fileInput.nextLine();
         fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
-        File file = new File(fileName + ".csv");
+        File file = new File("results/"+ fileName + ".csv");
 
         try
         {

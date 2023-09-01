@@ -163,7 +163,7 @@ public class Main {
                             CSV.create(rg.getRepos());
                             // Uses given file name to create a txt file for query metadata
                             try {
-                                FileWriter paramWrite = new FileWriter(CSV.fileName + "_metadata.txt");
+                                FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
                                 paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
                                         "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
                                         "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
