@@ -15,7 +15,7 @@ public class Main {
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
-            Boolean success = false;
+            Boolean success = false,headless=false;
             RepoGrab rg = null;
             String importCSV = "", languages = "", sDate = "", menuOrder = "";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, totalSize = 0, i = 0;
@@ -37,6 +37,7 @@ public class Main {
                     totalCommit = Integer.valueOf(dotenv.get("PROJECT_TOTALCOMMIT"));
                     totalSize = Integer.valueOf(dotenv.get("PROJECT_TOTALSIZE"));
                     menuOrder = dotenv.get("MENU_ORDER");
+                    headless = true;
                 } else {
                     Scanner scn = new Scanner(System.in);
 
@@ -128,7 +129,7 @@ public class Main {
                 if (importCSV.toLowerCase().equals("n")) {
                     rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate);
                 } else {
-                    rg = new RepoGrab();
+                    rg = new RepoGrab(headless);
                 }
                 System.out.println("\n** Grabbed repos!");
 
@@ -161,7 +162,7 @@ public class Main {
                             Clone.cloneRepos(rg.getRepos());
                             break;
                         case 3:
-                            CSV.create(rg.getRepos());
+                            CSV.create(rg.getRepos(),headless);
                             metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg);
                             break;
                         case 4:

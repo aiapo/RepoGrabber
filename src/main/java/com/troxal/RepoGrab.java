@@ -43,8 +43,8 @@ public class RepoGrab {
     }
 
     // Import CSV constructor
-    public RepoGrab(){
-        repoCollection = new HashSet<>(CSV.read());
+    public RepoGrab(Boolean headless){
+        repoCollection = new HashSet<>(CSV.read(headless));
     }
 
     // Easy GraphQL variable generator

@@ -20,12 +20,16 @@ public class CSV {
     public static String fileName;
     private static String oldFile;
 
-    public static void create(List<RepoInfo> repos){
-        //Allows user to input filename for CSV and fixes any illegal characters
-        System.out.println("Enter a name for the file here: ");
-        Scanner fileInput = new Scanner(System.in);
-        fileName = fileInput.nextLine();
-        fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+    public static void create(List<RepoInfo> repos,Boolean headless){
+        if(!headless){
+            //Allows user to input filename for CSV and fixes any illegal characters
+            System.out.println("Enter a name for the file here: ");
+            Scanner fileInput = new Scanner(System.in);
+            fileName = fileInput.nextLine();
+            fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+        }else{
+            fileName="Repos.csv";
+        }
         File file = new File("results/"+ fileName + ".csv");
 
         try
@@ -82,14 +86,18 @@ public class CSV {
     }
 
     // Read CSV, returns list of repos back
-    public static List<RepoInfo> read() {
+    public static List<RepoInfo> read(Boolean headless) {
         List<RepoInfo> repos = new ArrayList<>();
         try {
 
             // Open 'Repos.csv'
+            if(!headless){
             System.out.println("Enter in the name of the file:");
-            Scanner fileGrabber = new Scanner(System.in);
-            oldFile = fileGrabber.nextLine();
+                Scanner fileGrabber = new Scanner(System.in);
+                oldFile = fileGrabber.nextLine();
+            }else{
+                oldFile="Repos.csv";
+            }
             FileReader filereader = new FileReader("results/"+oldFile+".csv");
 
             // Skip header
