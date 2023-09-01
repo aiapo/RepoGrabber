@@ -210,7 +210,7 @@ public class RepoGrab {
         Data repoData = queryData(query,endCursor);
 
         if(repoData!=null){
-            if(((repoData.getSearch().getRepositoryCount()<800||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
+            if(((repoData.getSearch().getRepositoryCount()<700||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
                 System.out.println("[INFO] Unoptimized creation period, running optimization...");
                 ranAtLeastOnce=true;
                 dayOptimizer(addedTime);
