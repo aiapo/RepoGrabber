@@ -20,7 +20,7 @@ public class RepoGrab {
     // Initialize variables
     static private String authToken = Config.getAuthToken();
     private String language;
-    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0;
+    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0, addedRepos = 0;
     private Integer addedTime=20;
     private Integer amountReturned=35;
     private Boolean ranAtLeastOnce=false;
@@ -210,7 +210,7 @@ public class RepoGrab {
         Data repoData = queryData(query,endCursor);
 
         if(repoData!=null){
-            if(((repoData.getSearch().getRepositoryCount()<800||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
+            if(((repoData.getSearch().getRepositoryCount()<700||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
                 System.out.println("[INFO] Unoptimized creation period, running optimization...");
                 ranAtLeastOnce=true;
                 dayOptimizer(addedTime);
@@ -276,6 +276,7 @@ public class RepoGrab {
                                     )
                             );
                             System.out.println("** Added " + tempRepo.getName() + " (" + tempRepo.getUrl() + ")");
+                            addedRepos++;
                         } else
                             ignoredRepos++;
                     }
@@ -320,5 +321,12 @@ public class RepoGrab {
 
     // Get a single repo's data
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
+
+    public int getIgnoredRepos(){
+        return ignoredRepos;
+    }
+    public int getAddedRepos(){
+        return addedRepos;
+    }
 
 }

@@ -12,12 +12,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class CSV {
     // Create CSV of all repos
+
+    public static String fileName;
+    private static String oldFile;
+
     public static void create(List<RepoInfo> repos){
-        // Open 'Repos.csv'
-        File file = new File("results/Repos.csv");
+        //Allows user to input filename for CSV and fixes any illegal characters
+        System.out.println("Enter a name for the file here: ");
+        Scanner fileInput = new Scanner(System.in);
+        fileName = fileInput.nextLine();
+        fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+        File file = new File("results/"+ fileName + ".csv");
+
         try
         {
             // Use CSVWriter to create a new CSV
@@ -75,8 +85,12 @@ public class CSV {
     public static List<RepoInfo> read() {
         List<RepoInfo> repos = new ArrayList<>();
         try {
+
             // Open 'Repos.csv'
-            FileReader filereader = new FileReader("results/Repos.csv");
+            System.out.println("Enter in the name of the file:");
+            Scanner fileGrabber = new Scanner(System.in);
+            oldFile = fileGrabber.nextLine();
+            FileReader filereader = new FileReader("results/"+oldFile+".csv");
 
             // Skip header
             CSVReader reader = new CSVReaderBuilder(filereader)
