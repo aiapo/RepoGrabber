@@ -2,6 +2,7 @@ package com.troxal;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
@@ -161,18 +162,7 @@ public class Main {
                             break;
                         case 3:
                             CSV.create(rg.getRepos());
-                            // Uses given file name to create a txt file for query metadata
-                            try {
-                                FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
-                                paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
-                                        "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
-                                        "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
-                                        "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
-                                        "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now());
-                                paramWrite.close();
-                            } catch (IOException e) {
-                                System.out.println("Metadata output error");
-                            }
+                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg);
                             break;
                         case 4:
                             RefMine.calculate(rg.getRepos());
@@ -185,5 +175,20 @@ public class Main {
 
                 }
             }
+    }
+    // Uses given file name to create a txt file for query metadata
+    public static void metaData(int followers, String languages, int users, int percentLanguage, int totalCommit, int totalSize,
+                                String sDate, RepoGrab rg){
+        try {
+            FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
+            paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
+                    "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
+                    "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
+                    "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
+                    "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
+            paramWrite.close();
+        } catch (IOException e) {
+            System.out.println("Metadata output error");
+        }
     }
 }
