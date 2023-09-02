@@ -8,6 +8,8 @@ import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
 import com.troxal.manipulation.RefMine;
 import io.github.cdimascio.dotenv.Dotenv;
+
+import static java.lang.System.err;
 import static java.lang.System.exit;
 
 public class Main {
@@ -17,7 +19,8 @@ public class Main {
             Integer menuChoice = 0;
             Boolean success = false,headless=false;
             RepoGrab rg = null;
-            String importCSV = "", languages = "", sDate = "", menuOrder = "";
+            String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
+                    errorInt = "Please enter a number.", errorString = "Please enter a valid String";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, totalSize = 0, i = 0;
 
                 System.out.println("-- Welcome to RepoGrabber! --\n");
@@ -52,82 +55,36 @@ public class Main {
                     }
 
                     if (importCSV.toLowerCase().equals("n")) {
-                        System.out.println("What is the minimum amount of followers on project wanted? (ex: '50'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                followers = Integer.valueOf(scn.next());
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a number (ex: '50'): ");
-                            }
-                        }
-                        System.out.println("What language do you want to grab? (ex: 'java'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                languages = scn.next();
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a string (ex: 'java'): ");
-                            }
-                        }
-                        System.out.println("What is the minimum amount of mentionable users wanted? (ex: '20'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                users = Integer.valueOf(scn.next());
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a number (ex: '20'): ");
-                            }
-                        }
-                        System.out.println("What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                percentLanguage = Integer.valueOf(scn.next());
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a number (ex: '51'): ");
-                            }
-                        }
-                        System.out.println("What is minimum amount of commits wanted? (ex. '300'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                totalCommit = Integer.valueOf(scn.next());
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a number (ex: '300'): ");
-                            }
-                        }
-                        System.out.println("What is minimum size in bytes of repo wanted? (ex. '5000'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                totalSize = Integer.valueOf(scn.next());
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a number (ex: '5000'): ");
-                            }
-                        }
-                        System.out.println("What is start date of repos wanted? (ex. '2010-01-01'): ");
-                        success = false;
-                        while (!success) {
-                            try {
-                                sDate = scn.next();
-                                success = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid, please enter a string (ex: '2010-01-01'): ");
-                            }
-                        }
+                        String followPrompt = "What is the minimum amount of followers on project wanted? (ex: '50'): ";
+                        followers = paramGetterInt(followPrompt,errorInt,scn);
+
+                        String langPrompt = "What language do you want to grab? (ex: 'java'): ";
+                        languages = paramGetterString(langPrompt,errorString,scn);
+
+                        String mentionablePrompt = "What is the minimum amount of mentionable users wanted? (ex: '20'): ";
+                        users = paramGetterInt(mentionablePrompt,errorInt,scn);
+
+                        String percentPrompt = "What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ";
+                        percentLanguage = paramGetterInt(percentPrompt,errorInt,scn);
+
+                        String commitPrompt = "What is minimum amount of commits wanted? (ex. '300'): ";
+                        totalCommit = paramGetterInt(commitPrompt, errorInt,scn);
+
+                        String bytesPrompt = "What is minimum size in bytes of repo wanted? (ex. '5000'): ";
+                        totalSize = paramGetterInt(bytesPrompt,errorInt, scn);
+
+                        String startPrompt = "What is start date of repos wanted? (ex. '2010-01-01'): ";
+                        sDate = paramGetterString(startPrompt,errorString,scn);
+
+                        String endPrompt = "What is end date of repos wanted? (ex. '2010-01-01'): ";
+                        endDate = paramGetterString(endPrompt,errorString,scn);
+
                     }
                 }
 
                 System.out.println("\n** Grabbing repos!");
                 if (importCSV.toLowerCase().equals("n")) {
-                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate);
+                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate, endDate);
                 } else {
                     rg = new RepoGrab(headless);
                 }
@@ -163,7 +120,7 @@ public class Main {
                             break;
                         case 3:
                             CSV.create(rg.getRepos(),headless);
-                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg);
+                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg,endDate);
                             break;
                         case 4:
                             RefMine.calculate(rg.getRepos());
@@ -179,17 +136,47 @@ public class Main {
     }
     // Uses given file name to create a txt file for query metadata
     public static void metaData(int followers, String languages, int users, int percentLanguage, int totalCommit, int totalSize,
-                                String sDate, RepoGrab rg){
+                                String sDate, RepoGrab rg, String endDate){
         try {
             FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
             paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
                     "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
                     "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
-                    "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
+                    "\nEnd Date: " + endDate + "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
                     "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
             paramWrite.close();
         } catch (IOException e) {
             System.out.println("Metadata output error");
         }
+    }
+
+    public static int paramGetterInt(String prompt, String error, Scanner scn){
+        int param = 0;
+        System.out.println(prompt);
+        boolean success = false;
+        while (!success) {
+            try {
+                param = Integer.parseInt(scn.next());
+                success = true;
+            } catch (NumberFormatException e) {
+                System.out.println(error);
+            }
+        }
+        return param;
+    }
+
+    public static String paramGetterString(String prompt, String error, Scanner scn){
+        String param = "";
+        System.out.println(prompt);
+        boolean success = false;
+        while (!success) {
+            try {
+                param = scn.next();
+                success = true;
+            } catch (NumberFormatException e) {
+                System.out.println(error);
+            }
+        }
+        return param;
     }
 }

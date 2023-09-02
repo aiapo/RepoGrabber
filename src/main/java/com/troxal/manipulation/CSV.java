@@ -30,8 +30,8 @@ public class CSV {
         }else{
             fileName="Repos.csv";
         }
+        new File("./results").mkdirs();
         File file = new File("results/"+ fileName + ".csv");
-
         try
         {
             // Use CSVWriter to create a new CSV
