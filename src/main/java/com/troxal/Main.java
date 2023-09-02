@@ -17,7 +17,7 @@ public class Main {
             Integer menuChoice = 0;
             Boolean success = false,headless=false;
             RepoGrab rg = null;
-            String importCSV = "", languages = "", sDate = "", menuOrder = "";
+            String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, totalSize = 0, i = 0;
 
                 System.out.println("-- Welcome to RepoGrabber! --\n");
@@ -122,12 +122,22 @@ public class Main {
                                 System.out.println("Invalid, please enter a string (ex: '2010-01-01'): ");
                             }
                         }
+                        System.out.println("What is end date of repos wanted? (ex. '2010-01-01'): ");
+                        success = false;
+                        while (!success) {
+                            try {
+                                endDate = scn.next();
+                                success = true;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid, please enter a string (ex: '2010-01-01'): ");
+                            }
+                        }
                     }
                 }
 
                 System.out.println("\n** Grabbing repos!");
                 if (importCSV.toLowerCase().equals("n")) {
-                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate);
+                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate, endDate);
                 } else {
                     rg = new RepoGrab(headless);
                 }
@@ -163,7 +173,7 @@ public class Main {
                             break;
                         case 3:
                             CSV.create(rg.getRepos(),headless);
-                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg);
+                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg,endDate);
                             break;
                         case 4:
                             RefMine.calculate(rg.getRepos());
@@ -179,13 +189,13 @@ public class Main {
     }
     // Uses given file name to create a txt file for query metadata
     public static void metaData(int followers, String languages, int users, int percentLanguage, int totalCommit, int totalSize,
-                                String sDate, RepoGrab rg){
+                                String sDate, RepoGrab rg, String endDate){
         try {
             FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
             paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
                     "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
                     "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
-                    "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
+                    "\nEnd Date: " + endDate + "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
                     "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
             paramWrite.close();
         } catch (IOException e) {

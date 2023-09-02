@@ -28,7 +28,7 @@ public class RepoGrab {
     private Set<RepoInfo> repoCollection = new HashSet<>();
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
-    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,Integer totalSize,String sDate) {
+    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,Integer totalSize,String sDate, String endDate) {
         this.followers=followers;
         this.language=language;
         this.users=users;
@@ -36,7 +36,7 @@ public class RepoGrab {
         this.totalCommit=totalCommit;
         this.totalSize=totalSize;
         this.beginningDate = LocalDate.parse(sDate);
-        this.endingDate = currentDate;
+        this.endingDate = LocalDate.parse(endDate);
         this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
 
         getRepos(null);
