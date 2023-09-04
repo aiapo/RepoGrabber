@@ -8,10 +8,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "name",
     "target"
 })
 @Generated("jsonschema2pojo")
 public class MainBranch {
+    @JsonProperty("name")
+    private String name;
+
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
+
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @JsonProperty("target")
     private Target target;

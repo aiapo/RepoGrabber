@@ -193,6 +193,7 @@ public class RepoGrab {
                                 "totalSize " +
                             "} " +
                             "mainBranch: defaultBranchRef { " +
+                                "name " +
                                 "target { " +
                                     "... on Commit { " +
                                         "history { totalCount } " +
@@ -272,7 +273,8 @@ public class RepoGrab {
                                             tempRepo.getForkCount(),
                                             tempRepo.getStargazerCount(),
                                             tempRepo.getWatchers().getTotalCount(),
-                                            languageList
+                                            languageList,
+                                            tempRepo.getMainBranch().getName()
                                     )
                             );
                             System.out.println("** Added " + tempRepo.getName() + " (" + tempRepo.getUrl() + ")");

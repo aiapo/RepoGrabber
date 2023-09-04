@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepoInfo {
-    private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate;
+    private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate,branchName;
     private Boolean isArchived,isFork;
     private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits;
     private Integer forkCount,starCount,watchCount;
@@ -30,7 +30,8 @@ public class RepoInfo {
             Integer forkCount,
             Integer starCount,
             Integer watchCount,
-            List<LanguageInfo> languages) {
+            List<LanguageInfo> languages,
+            String branchName) {
         setId(id);
         setName(name);
         setUrl(url);
@@ -49,6 +50,7 @@ public class RepoInfo {
         setForkCount(forkCount);
         setStarCount(starCount);
         setWatchCount(watchCount);
+        setBranchName(branchName);
     }
 
     // Set/Get ID
@@ -194,6 +196,14 @@ public class RepoInfo {
         return languages;
     }
 
+    //Set/Get branchName
+    public void setBranchName(String branchName){
+        this.branchName=branchName;
+    }
+    public String getBranchName(){
+        return branchName;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -218,6 +228,9 @@ public class RepoInfo {
         sb.append('\n');
         sb.append("Total Commits: ");
         sb.append(getTotalCommits());
+        sb.append('\n');
+        sb.append("Main Branch Name: ");
+        sb.append(getBranchName());
         sb.append('\n');
         sb.append("Languages:");
         for (int i = 0; i < languages.size(); i++) {

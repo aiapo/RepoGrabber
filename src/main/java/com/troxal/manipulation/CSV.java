@@ -67,7 +67,8 @@ public class CSV {
                         String.valueOf(repos.get(i).getForkCount()),
                         String.valueOf(repos.get(i).getStarCount()),
                         String.valueOf(repos.get(i).getWatchCount()),
-                        sb.toString()
+                        sb.toString(),
+                        repos.get(i).getBranchName()
                 };
 
                 // Write row to CSV
@@ -142,7 +143,8 @@ public class CSV {
                         Integer.valueOf(csvData.get(i)[14]),
                         Integer.valueOf(csvData.get(i)[15]),
                         Integer.valueOf(csvData.get(i)[16]),
-                        tempLanguages
+                        tempLanguages,
+                        csvData.get(i)[18]
                 );
 
                 // Add the repos to the repo list

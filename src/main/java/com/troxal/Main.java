@@ -1,15 +1,15 @@
 package com.troxal;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.temporal.ChronoUnit;
-import java.util.Scanner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
 import com.troxal.manipulation.RefMine;
 import io.github.cdimascio.dotenv.Dotenv;
 
-import static java.lang.System.err;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.temporal.ChronoUnit;
+import java.util.Scanner;
+
 import static java.lang.System.exit;
 
 public class Main {
