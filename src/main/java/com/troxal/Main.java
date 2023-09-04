@@ -10,10 +10,15 @@ import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static java.lang.System.exit;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        final Integer totalThreadPool = 50;
+        ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
@@ -123,7 +128,16 @@ public class Main {
                             metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg,endDate);
                             break;
                         case 4:
-                            RefMine.calculate(rg.getRepos(),false);
+                            for(int j=0;j<rg.getRepos().size();j++){
+                                Runnable worker = new RefMine(rg.getRepo(j),false);
+                                executor.execute(worker);
+                            }
+
+                            executor.shutdown();
+
+                            while (!executor.isTerminated()) {
+                            }
+                            System.out.println("\nFinished all threads");
                         case 5:
                             break;
                         case 6:

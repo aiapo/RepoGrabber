@@ -18,8 +18,31 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public class RefMine {
-    private static Boolean run(String gitURI,String dir,String branchName){
+public class RefMine implements Runnable {
+    private RepoInfo repo;
+    String branchName = null;
+
+    public RefMine(RepoInfo repo, Boolean runAllBranches){
+        this.repo=repo;
+        if(!runAllBranches)
+            branchName = repo.getBranchName();
+    }
+
+    @Override
+    public void run() {
+        System.out.println("** Running RefMiner on "+repo.getName());
+        String dir = "repos/"+repo.getName()+"_"+repo.getId();
+        if(runRef(repo.getUrl()+".git",dir,branchName)){
+            System.out.println("** RefMiner successful");
+            try {
+                FileUtils.deleteDirectory(new File(dir));
+            }catch (IOException e){
+                System.out.println("[ERROR] Error deleting: "+e);
+            }
+        }
+    }
+
+    private static Boolean runRef(String gitURI,String dir,String branchName){
         GitService gitService = new GitServiceImpl();
         GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
         try{
@@ -116,26 +139,6 @@ public class RefMine {
         }catch (Exception e){
             System.out.println("[ERROR] Exception: "+e);
             return false;
-        }
-    }
-
-    // Clone all repos
-    public static void calculate(List<RepoInfo> repos,Boolean runAllBranches){
-        String branchName = null;
-        for(int i=0;i<repos.size();i++) {
-            System.out.println("** Running RefMiner on "+repos.get(i).getName());
-            String dir = "repos/"+repos.get(i).getName()+"_"+repos.get(i).getId();
-            if(!runAllBranches)
-                 branchName = repos.get(i).getBranchName();
-            if(run(repos.get(i).getUrl()+".git",dir,branchName)){
-                System.out.println("** RefMiner successful");
-                try {
-                    FileUtils.deleteDirectory(new File(dir));
-                }catch (IOException e){
-                    System.out.println("[ERROR] Error deleting: "+e);
-                }
-            }
-
         }
     }
 }
