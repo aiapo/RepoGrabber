@@ -19,7 +19,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 public class RefMine {
-    private static Boolean run(String gitURI, String dir){
+    private static Boolean run(String gitURI,String dir,String branchName){
         GitService gitService = new GitServiceImpl();
         GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
         try{
@@ -51,7 +51,7 @@ public class RefMine {
             }
 
             // Run RefMiner
-            miner.detectAll(repo, null, new RefactoringHandler() {
+            miner.detectAll(repo, branchName, new RefactoringHandler() {
                 private int commitCount = 0;
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
@@ -120,11 +120,14 @@ public class RefMine {
     }
 
     // Clone all repos
-    public static void calculate(List<RepoInfo> repos){
+    public static void calculate(List<RepoInfo> repos,Boolean runAllBranches){
+        String branchName = null;
         for(int i=0;i<repos.size();i++) {
             System.out.println("** Running RefMiner on "+repos.get(i).getName());
             String dir = "repos/"+repos.get(i).getName()+"_"+repos.get(i).getId();
-            if(run(repos.get(i).getUrl()+".git",dir)){
+            if(!runAllBranches)
+                 branchName = repos.get(i).getBranchName();
+            if(run(repos.get(i).getUrl()+".git",dir,branchName)){
                 System.out.println("** RefMiner successful");
                 try {
                     FileUtils.deleteDirectory(new File(dir));

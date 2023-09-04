@@ -123,7 +123,7 @@ public class Main {
                             metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg,endDate);
                             break;
                         case 4:
-                            RefMine.calculate(rg.getRepos());
+                            RefMine.calculate(rg.getRepos(),false);
                         case 5:
                             break;
                         case 6:
