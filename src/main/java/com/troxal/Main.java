@@ -39,6 +39,7 @@ public class Main {
                     importCSV = dotenv.get("IMPORT_CSV");
                     languages = dotenv.get("LANGUAGE_WANTED");
                     sDate = dotenv.get("START_CREATEDATE");
+                    endDate = dotenv.get("END_CREATEDATE");
                     followers = Integer.valueOf(dotenv.get("PROJECT_FOLLOWERS"));
                     users = Integer.valueOf(dotenv.get("PROJECT_MENTIONABLE"));
                     percentLanguage = Integer.valueOf(dotenv.get("PROJECT_PERCENT"));
