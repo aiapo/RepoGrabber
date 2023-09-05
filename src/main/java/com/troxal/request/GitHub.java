@@ -1,9 +1,14 @@
 package com.troxal.request;
 
+import kong.unirest.Headers;
+import org.jsoup.Connection;
 import org.jsoup.select.Elements;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import static org.jsoup.Jsoup.parse;
 
 public class GitHub {
     // Query GraphQL API, returns headers and body
@@ -18,7 +23,8 @@ public class GitHub {
     }
 
     public static Integer getCommiters(String url){
-        Elements e = Scrape.scrapePage(url).select("a.Link--primary.no-underline.Link.d-flex.flex-items-center");
+        Connection.Response page = Scrape.scrapePage(url);
+        Elements e = parse(page.body()).select("a.Link--primary.no-underline.Link.d-flex.flex-items-center");
         for(int i=0;i<e.size();i++)
             if(e.get(i).text().contains("Contributors"))
                 return Integer.valueOf(e.get(i).select("span.Counter.ml-1").text().replace(",",""));

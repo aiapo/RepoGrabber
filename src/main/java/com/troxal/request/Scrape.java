@@ -6,10 +6,9 @@ import org.jsoup.nodes.Document;
 import java.io.IOException;
 
 public class Scrape {
-    public static Document scrapePage(String address){
+    public static Connection.Response scrapePage(String address){
         try{
-            Connection.Response execute = Jsoup.connect(address).execute();
-            return Jsoup.parse(execute.body());
+            return Jsoup.connect(address).execute();
         } catch (IOException e) {
             System.out.println("Error scrapping: "+e);
             return null;
