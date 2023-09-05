@@ -8,7 +8,7 @@ import java.util.List;
 public class RepoInfo {
     private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate,branchName;
     private Boolean isArchived,isFork;
-    private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits;
+    private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits,totalCommiterCount;
     private Integer forkCount,starCount,watchCount;
     private List<LanguageInfo> languages = new ArrayList<>();
 
@@ -25,6 +25,7 @@ public class RepoInfo {
             Boolean isFork,
             Integer totalIssueUsers,
             Integer totalMentionableUsers,
+            Integer totalCommiterCount,
             Integer totalProjectSize,
             Integer totalCommits,
             Integer forkCount,
@@ -44,6 +45,7 @@ public class RepoInfo {
         setIsFork(isFork);
         setTotalMentionableUsers(totalMentionableUsers);
         setTotalIssueUsers(totalIssueUsers);
+        setTotalCommiterCount(totalCommiterCount);
         setTotalProjectSize(totalProjectSize);
         setLanguages(languages);
         setTotalCommits(totalCommits);
@@ -196,13 +198,17 @@ public class RepoInfo {
         return languages;
     }
 
-    //Set/Get branchName
+    // Set/Get branchName
     public void setBranchName(String branchName){
         this.branchName=branchName;
     }
     public String getBranchName(){
         return branchName;
     }
+
+    // Set/Get totalCommiterCount
+    public void setTotalCommiterCount(Integer totalCommiterCount){ this.totalCommiterCount=totalCommiterCount;}
+    public Integer getTotalCommiterCount(){ return totalCommiterCount; }
 
     @Override
     public String toString() {

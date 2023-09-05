@@ -1,5 +1,7 @@
 package com.troxal.request;
 
+import org.jsoup.select.Elements;
+
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +15,14 @@ public class GitHub {
     // Query REST API, returns headers and body
     public static Requests REST(String authToken,String query){
         return apiHandler(Requests.get("https://api.github.com"+query,authToken));
+    }
+
+    public static Integer getCommiters(String url){
+        Elements e = Scrape.scrapePage(url).select("a.Link--primary.no-underline.Link.d-flex.flex-items-center");
+        for(int i=0;i<e.size();i++)
+            if(e.get(i).text().contains("Contributors"))
+                return Integer.valueOf(e.get(i).select("span.Counter.ml-1").text().replace(",",""));
+        return -1;
     }
 
     // Handle the requests

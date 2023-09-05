@@ -39,7 +39,8 @@ public class CSV {
 
             // Write header stuff
             String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language",
-                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue " +
+                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Commiters",
+                    "Issue " +
                     "Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages","Branch Name"};
             writer.writeNext(headerTxt);
 
@@ -64,6 +65,7 @@ public class CSV {
                         String.valueOf(repos.get(i).getIsFork()),
                         String.valueOf(repos.get(i).getTotalMentionableUsers()),
                         String.valueOf(repos.get(i).getTotalIssueUsers()),
+                        String.valueOf(repos.get(i).getTotalCommiterCount()),
                         String.valueOf(repos.get(i).getTotalProjectSize()),
                         String.valueOf(repos.get(i).getTotalCommits()),
                         String.valueOf(repos.get(i).getForkCount()),
@@ -116,7 +118,7 @@ public class CSV {
             // Read all rows of the CSV
             for (int i=0;i<csvData.size();i++) {
                 // Languages are stored seperated by a space in CSV, so split
-                String[] languages = csvData.get(i)[17].split("' ");
+                String[] languages = csvData.get(i)[18].split("' ");
                 // tempLanguage to read into RepoInfo
                 List<LanguageInfo> tempLanguages = new ArrayList<>();
                 // Then the name and size are seperated by a colon
@@ -145,8 +147,9 @@ public class CSV {
                         Integer.valueOf(csvData.get(i)[14]),
                         Integer.valueOf(csvData.get(i)[15]),
                         Integer.valueOf(csvData.get(i)[16]),
+                        Integer.valueOf(csvData.get(i)[17]),
                         tempLanguages,
-                        csvData.get(i)[18]
+                        csvData.get(i)[19]
                 );
 
                 // Add the repos to the repo list

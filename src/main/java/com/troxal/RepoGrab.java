@@ -252,6 +252,8 @@ public class RepoGrab {
                         if (tempRepo.getMainBranch().getTarget().getHistory().getTotalCount() < totalCommit)
                             ignoreRepo = true;
 
+                        Integer commiterCount = GitHub.getCommiters(tempRepo.getUrl());
+
                         //If not ignored repo, add to repoCollection array
                         if (!ignoreRepo) {
                             repoCollection.add(
@@ -268,6 +270,7 @@ public class RepoGrab {
                                             tempRepo.getIsFork(),
                                             tempRepo.getIssueUsers().getTotalCount(),
                                             tempRepo.getMentionableUsers().getTotalCount(),
+                                            commiterCount,
                                             tempRepo.getLanguages().getTotalSize(),
                                             tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
                                             tempRepo.getForkCount(),
