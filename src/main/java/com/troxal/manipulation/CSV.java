@@ -39,9 +39,8 @@ public class CSV {
 
             // Write header stuff
             String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language",
-                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Commiters",
-                    "Issue " +
-                    "Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages","Branch Name"};
+                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users",
+                    "Committers","Total Size","Total Commits","Forks","Stars","Watchers","Languages","Branch Name"};
             writer.writeNext(headerTxt);
 
             // For all repos, import into a row
@@ -65,7 +64,7 @@ public class CSV {
                         String.valueOf(repos.get(i).getIsFork()),
                         String.valueOf(repos.get(i).getTotalMentionableUsers()),
                         String.valueOf(repos.get(i).getTotalIssueUsers()),
-                        String.valueOf(repos.get(i).getTotalCommiterCount()),
+                        String.valueOf(repos.get(i).getTotalCommitterCount()),
                         String.valueOf(repos.get(i).getTotalProjectSize()),
                         String.valueOf(repos.get(i).getTotalCommits()),
                         String.valueOf(repos.get(i).getForkCount()),

@@ -20,7 +20,7 @@ public class RepoGrab {
     // Initialize variables
     static private String authToken = Config.getAuthToken();
     private String language;
-    private Integer followers,users,percentLanguage,totalCommit,totalSize,ignoredRepos=0, addedRepos = 0;
+    private Integer followers,users,percentLanguage,totalCommit,minTotalSize,maxTotalSize,ignoredRepos=0,addedRepos = 0;
     private Integer addedTime=20;
     private Integer amountReturned=35;
     private Boolean ranAtLeastOnce=false;
@@ -28,13 +28,15 @@ public class RepoGrab {
     private Set<RepoInfo> repoCollection = new HashSet<>();
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
-    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,Integer totalSize,String sDate, String endDate) {
+    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,
+                    Integer minTotalSize,Integer maxTotalSize,String sDate, String endDate) {
         this.followers=followers;
         this.language=language;
         this.users=users;
         this.percentLanguage=percentLanguage;
         this.totalCommit=totalCommit;
-        this.totalSize=totalSize;
+        this.minTotalSize = minTotalSize;
+        this.maxTotalSize = maxTotalSize;
         this.beginningDate = LocalDate.parse(sDate);
         this.endingDate = LocalDate.parse(endDate);
         this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
@@ -60,8 +62,8 @@ public class RepoGrab {
             sb.append(" language:"+language);
         }
         // If there's a min total size, set
-        if(totalSize!=null) {
-            sb.append(" size:>="+totalSize);
+        if(minTotalSize !=null) {
+            sb.append(" size:>="+ minTotalSize);
         }
         // Set the beginning to ending created dates
         sb.append(" created:");
@@ -221,65 +223,11 @@ public class RepoGrab {
                 for (int i = 0; i < repoData.getSearch().getRepositories().size(); i++) {
                     // If there's anything in the default/main branch
                     if (repoData.getSearch().getRepositories().get(i).getRepo().getMainBranch() != null) {
-
-                        // Init don't ignore repo
-                        Boolean ignoreRepo = false;
                         // Set a tempRepo var for less code duplication
                         Repo tempRepo = repoData.getSearch().getRepositories().get(i).getRepo();
 
-                        // List of all languages
-                        List<LanguageInfo> languageList = new ArrayList<>();
-                        // For top 3 languages
-                        for (int j = 0; j < tempRepo.getLanguages().getEdges().size(); j++) {
-                            // Add languages to language list
-                            languageList.add(
-                                    new LanguageInfo(
-                                            tempRepo.getLanguages().getEdges().get(j).getNode().getName(),
-                                            tempRepo.getLanguages().getEdges().get(j).getSize()
-                                    )
-                            );
-                            // If specified language over specified threshold, don't add repo
-                            if (tempRepo.getLanguages().getEdges().get(j).getNode().getName() == language)
-                                if ((tempRepo.getLanguages().getEdges().get(j).getSize() / tempRepo.getLanguages().getTotalSize() < percentLanguage))
-                                    ignoreRepo = true;
-                        }
-
-                        // If the mentionable users is less than the specified amount, ignore repo
-                        if (tempRepo.getMentionableUsers().getTotalCount() < users)
-                            ignoreRepo = true;
-
-                        // If the commit count is less than the specified amount, ignore repo
-                        if (tempRepo.getMainBranch().getTarget().getHistory().getTotalCount() < totalCommit)
-                            ignoreRepo = true;
-
-                        Integer commiterCount = GitHub.getCommiters(tempRepo.getUrl());
-
-                        //If not ignored repo, add to repoCollection array
-                        if (!ignoreRepo) {
-                            repoCollection.add(
-                                    new RepoInfo(
-                                            tempRepo.getId(),
-                                            tempRepo.getName(),
-                                            tempRepo.getUrl(),
-                                            tempRepo.getDescription(),
-                                            tempRepo.getPrimaryLanguage().getName(),
-                                            tempRepo.getCreatedAt(),
-                                            tempRepo.getUpdatedAt(),
-                                            tempRepo.getPushedAt(),
-                                            tempRepo.getIsArchived(),
-                                            tempRepo.getIsFork(),
-                                            tempRepo.getIssueUsers().getTotalCount(),
-                                            tempRepo.getMentionableUsers().getTotalCount(),
-                                            commiterCount,
-                                            tempRepo.getLanguages().getTotalSize(),
-                                            tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
-                                            tempRepo.getForkCount(),
-                                            tempRepo.getStargazerCount(),
-                                            tempRepo.getWatchers().getTotalCount(),
-                                            languageList,
-                                            tempRepo.getMainBranch().getName()
-                                    )
-                            );
+                        // Try adding repo, add to repoCollection array
+                        if (addRepo(tempRepo)) {
                             System.out.println("** Added " + tempRepo.getName() + " (" + tempRepo.getUrl() + ")");
                             addedRepos++;
                         } else
@@ -298,7 +246,7 @@ public class RepoGrab {
                 // While there is a next page AND you still have at least 100 API calls left
                 if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                     // Print status on cursor/remaining API
-                    System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Next Page: "+repoData.getSearch().getPageInfo().getHasNextPage()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
+                    System.out.println("[INFO] Next cursor: "+repoData.getSearch().getPageInfo().getEndCursor()+" :: Remaining API: "+repoData.getRateLimit().getRemaining());
                     // Recurse with next cursor
                     getRepos(repoData.getSearch().getPageInfo().getEndCursor());
                 }
@@ -326,6 +274,66 @@ public class RepoGrab {
 
     // Get a single repo's data
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
+
+    private Boolean addRepo(Repo tempRepo){
+        // List of all languages
+        List<LanguageInfo> languageList = new ArrayList<>();
+        // For top 3 languages
+        for (int j = 0; j < tempRepo.getLanguages().getEdges().size(); j++) {
+            // Add languages to language list
+            languageList.add(
+                    new LanguageInfo(
+                            tempRepo.getLanguages().getEdges().get(j).getNode().getName(),
+                            tempRepo.getLanguages().getEdges().get(j).getSize()
+                    )
+            );
+            // If specified language over specified threshold, don't add repo
+            if (tempRepo.getLanguages().getEdges().get(j).getNode().getName() == language)
+                if ((tempRepo.getLanguages().getEdges().get(j).getSize() / tempRepo.getLanguages().getTotalSize() < percentLanguage))
+                    return false;
+        }
+
+        // If the commit count is less than the specified amount, ignore repo
+        if (tempRepo.getMainBranch().getTarget().getHistory().getTotalCount() < totalCommit)
+            return false;
+
+        // If the size is over the max, ignore repo
+        if(tempRepo.getLanguages().getTotalSize()>maxTotalSize)
+            return false;
+
+        Integer commiterCount = GitHub.getCommiters(tempRepo.getUrl());
+
+        // If the committer users is less than the specified amount, ignore repo
+        if (commiterCount < users)
+            return false;
+
+        //If not ignored repo, add to repoCollection array
+        repoCollection.add(
+                new RepoInfo(
+                        tempRepo.getId(),
+                        tempRepo.getName(),
+                        tempRepo.getUrl(),
+                        tempRepo.getDescription(),
+                        tempRepo.getPrimaryLanguage().getName(),
+                        tempRepo.getCreatedAt(),
+                        tempRepo.getUpdatedAt(),
+                        tempRepo.getPushedAt(),
+                        tempRepo.getIsArchived(),
+                        tempRepo.getIsFork(),
+                        tempRepo.getIssueUsers().getTotalCount(),
+                        tempRepo.getMentionableUsers().getTotalCount(),
+                        commiterCount,
+                        tempRepo.getLanguages().getTotalSize(),
+                        tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
+                        tempRepo.getForkCount(),
+                        tempRepo.getStargazerCount(),
+                        tempRepo.getWatchers().getTotalCount(),
+                        languageList,
+                        tempRepo.getMainBranch().getName()
+                )
+        );
+        return true;
+    }
 
     public int getIgnoredRepos(){
         return ignoredRepos;

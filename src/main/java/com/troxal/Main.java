@@ -14,17 +14,19 @@ import static java.lang.System.exit;
 
 public class Main {
     public static void main(String[] args) {
-        final Integer totalThreadPool = 30;
-        ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
+        final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
+        final Integer totalThreadPool = maxProcessors-1;
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
-            Boolean success = false,headless=false;
+            Boolean headless=false;
             RepoGrab rg = null;
+            ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
             String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
                     errorInt = "Please enter a number.", errorString = "Please enter a valid String", errorYN =
                     "Please enter 'y' or 'n'";
-            Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, totalSize = 0, i = 0;
+            Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, minTotalSize = 0, maxTotalSize =
+                    0, commitUsers = 0, i = 0;
 
                 System.out.println("-- Welcome to RepoGrabber! --\n");
 
@@ -39,10 +41,11 @@ public class Main {
                     sDate = dotenv.get("START_CREATEDATE");
                     endDate = dotenv.get("END_CREATEDATE");
                     followers = Integer.valueOf(dotenv.get("PROJECT_FOLLOWERS"));
-                    users = Integer.valueOf(dotenv.get("PROJECT_MENTIONABLE"));
+                    users = Integer.valueOf(dotenv.get("PROJECT_COMMITTERS"));
                     percentLanguage = Integer.valueOf(dotenv.get("PROJECT_PERCENT"));
                     totalCommit = Integer.valueOf(dotenv.get("PROJECT_TOTALCOMMIT"));
-                    totalSize = Integer.valueOf(dotenv.get("PROJECT_TOTALSIZE"));
+                    minTotalSize = Integer.valueOf(dotenv.get("PROJECT_MINTOTALSIZE"));
+                    maxTotalSize = Integer.valueOf(dotenv.get("PROJECT_MAXTOTALSIZE"));
                     menuOrder = dotenv.get("MENU_ORDER");
                     headless = true;
                 } else {
@@ -58,8 +61,8 @@ public class Main {
                         String langPrompt = "What language do you want to grab? (ex: 'java'): ";
                         languages = paramGetterString(langPrompt,errorString,scn);
 
-                        String mentionablePrompt = "What is the minimum amount of mentionable users wanted? (ex: '20'): ";
-                        users = paramGetterInt(mentionablePrompt,errorInt,scn);
+                        String committerPrompt = "What is the minimum amount of commit users wanted? (ex: '2'): ";
+                        users = paramGetterInt(committerPrompt,errorInt,scn);
 
                         String percentPrompt = "What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ";
                         percentLanguage = paramGetterInt(percentPrompt,errorInt,scn);
@@ -67,8 +70,11 @@ public class Main {
                         String commitPrompt = "What is minimum amount of commits wanted? (ex. '300'): ";
                         totalCommit = paramGetterInt(commitPrompt, errorInt,scn);
 
-                        String bytesPrompt = "What is minimum size in bytes of repo wanted? (ex. '5000'): ";
-                        totalSize = paramGetterInt(bytesPrompt,errorInt, scn);
+                        String minSizePrompt = "What is minimum size in kilobytes of repo wanted? (ex. '5000'): ";
+                        minTotalSize = paramGetterInt(minSizePrompt,errorInt,scn);
+
+                        String maxSizePrompt = "What is the maximum size in kilobytes of repo wanted? (ex. 5000000): ";
+                        maxTotalSize = paramGetterInt(maxSizePrompt,errorInt,scn);
 
                         String startPrompt = "What is start date of repos wanted? (ex. '2010-01-01'): ";
                         sDate = paramGetterString(startPrompt,errorString,scn);
@@ -81,7 +87,8 @@ public class Main {
 
                 System.out.println("\n** Grabbing repos!");
                 if (importCSV.toLowerCase().equals("n")) {
-                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, totalSize, sDate, endDate);
+                    rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, minTotalSize,
+                            maxTotalSize, sDate, endDate);
                 } else {
                     rg = new RepoGrab(headless);
                 }
@@ -117,27 +124,26 @@ public class Main {
                             break;
                         case 3:
                             CSV.create(rg.getRepos(),headless);
-                            metaData(followers,languages,users,percentLanguage,totalCommit,totalSize,sDate,rg,endDate);
+                            metaData(followers,languages,users,percentLanguage,totalCommit,minTotalSize,sDate,rg,endDate);
                             break;
                         case 4:
                             for(int j=0;j<rg.getRepos().size();j++){
                                 Runnable worker = new RefMine(rg.getRepo(j),false);
                                 executor.execute(worker);
                             }
-
-                            executor.shutdown();
-
-                            while (!executor.isTerminated()) {
-                            }
-                            System.out.println("\nFinished all threads");
                         case 5:
                             break;
                         case 6:
                             newQuery = false;
                             break;
                     }
-
                 }
+
+                // Shut down threads
+                executor.shutdown();
+                while (!executor.isTerminated()) {
+                }
+                System.out.println("\nFinished all threads");
             }
     }
     // Uses given file name to create a txt file for query metadata
@@ -146,7 +152,7 @@ public class Main {
         try {
             FileWriter paramWrite = new FileWriter("results/" + CSV.fileName + "_metadata.txt");
             paramWrite.write("+Min Followers: " + followers + "\n+Language: " + languages +
-                    "\n+Min Mentionable Users: " + users + " \n+Percent of Language: " + percentLanguage +
+                    "\n+Min Committers: " + users + " \n+Percent of Language: " + percentLanguage +
                     "\n+Min Commits: " + totalCommit + "\n+Min Size in Bytes: " + totalSize + "\n+Start Date: " + sDate +
                     "\nEnd Date: " + endDate + "\n\n+Added Repos: " + rg.getAddedRepos() + "\n+Ignored Repos: " + rg.getIgnoredRepos() +
                     "\n\n" + java.time.LocalDate.now() + " " + java.time.LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
