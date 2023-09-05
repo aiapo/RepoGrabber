@@ -38,7 +38,9 @@ public class CSV {
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
             // Write header stuff
-            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language","Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages"};
+            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language",
+                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue " +
+                    "Users","Total Size","Total Commits","Forks","Stars","Watchers","Languages","Branch Name"};
             writer.writeNext(headerTxt);
 
             // For all repos, import into a row
