@@ -22,7 +22,8 @@ public class Main {
             Boolean success = false,headless=false;
             RepoGrab rg = null;
             String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
-                    errorInt = "Please enter a number.", errorString = "Please enter a valid String";
+                    errorInt = "Please enter a number.", errorString = "Please enter a valid String", errorYN =
+                    "Please enter 'y' or 'n'";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, totalSize = 0, i = 0;
 
                 System.out.println("-- Welcome to RepoGrabber! --\n");
@@ -45,17 +46,10 @@ public class Main {
                     menuOrder = dotenv.get("MENU_ORDER");
                     headless = true;
                 } else {
-                    Scanner scn = new Scanner(System.in);
+                   Scanner scn = new Scanner(System.in);
 
-                    System.out.println("Do you want to import a CSV to skip the GitHub search? (y/n): ");
-                    success = false;
-                    while (!success) {
-                        importCSV = scn.next();
-                        if (importCSV.toLowerCase().equals("y") || importCSV.toLowerCase().equals("n"))
-                            success = true;
-                        else
-                            System.out.println("Invalid, please enter a 'y' or 'n': ");
-                    }
+                   String importPrompt = "Do you want to import a CSV to skip the GitHub search? (y/n): ";
+                   importCSV = paramGetterYN(importPrompt,errorYN,scn);
 
                     if (importCSV.toLowerCase().equals("n")) {
                         String followPrompt = "What is the minimum amount of followers on project wanted? (ex: '50'): ";
@@ -186,6 +180,21 @@ public class Main {
                 param = scn.next();
                 success = true;
             } catch (NumberFormatException e) {
+                System.out.println(error);
+            }
+        }
+        return param;
+    }
+
+    public static String paramGetterYN(String prompt, String error, Scanner scn){
+        String param = "";
+        System.out.println(prompt);
+        boolean success = false;
+        while (!success) {
+            param = scn.next();
+            if (param.toLowerCase().equals("y") || param.toLowerCase().equals("n")){
+                success = true;
+            }else{
                 System.out.println(error);
             }
         }
