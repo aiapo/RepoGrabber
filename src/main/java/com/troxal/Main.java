@@ -4,20 +4,17 @@ import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
 import com.troxal.manipulation.RefMine;
 import io.github.cdimascio.dotenv.Dotenv;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import static java.lang.System.exit;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        final Integer totalThreadPool = 50;
+    public static void main(String[] args) {
+        final Integer totalThreadPool = 30;
         ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
         boolean newQuery = true;
         while (newQuery) {

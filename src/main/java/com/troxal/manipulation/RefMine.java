@@ -20,7 +20,7 @@ import java.util.List;
 
 public class RefMine implements Runnable {
     private RepoInfo repo;
-    String branchName = null;
+    private String branchName = null;
 
     public RefMine(RepoInfo repo, Boolean runAllBranches){
         this.repo=repo;
