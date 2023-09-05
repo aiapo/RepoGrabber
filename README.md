@@ -19,10 +19,10 @@ might be in the future/based on different queries.*
   * Language
   * Created from a date to now
   * Percentage of bytes language repo comprises
-  * Mentionable users
+  * Committers
   * Total commits over lifetime
   * Total bytes
-* Grabs straight from GitHub's GraphQL/REST APIs
+* Grabs straight from GitHub
 * Clones repos
 * Lists repos
 * Integration with RefMiner to show output all refactorings to JSON
@@ -43,7 +43,7 @@ might be in the future/based on different queries.*
     * There is an optimization algorithm that should make it so that each query
     is between 900-1000 repos
   * Because of the amount of retrieved data, the response is only being stable
-  at ~40 repos/page
+  at ~35 repos/page
     * So there is pagination of every query chunked into 40 repos/query
 * There is a 3 seconds wait every query to prevent secondary rate limits
 * The code is a bit messy, hope to clean it up soon
