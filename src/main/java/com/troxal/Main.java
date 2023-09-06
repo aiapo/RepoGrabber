@@ -16,12 +16,12 @@ public class Main {
     public static void main(String[] args) {
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
+        ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
             Boolean headless=false;
             RepoGrab rg = null;
-            ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
             String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
                     errorInt = "Please enter a number.", errorString = "Please enter a valid String", errorYN =
                     "Please enter 'y' or 'n'";
@@ -131,6 +131,15 @@ public class Main {
                                 Runnable worker = new RefMine(rg.getRepo(j),false);
                                 executor.execute(worker);
                             }
+
+                            // Shut down threads
+                            executor.shutdown();
+
+                            while (!executor.isTerminated()) {
+
+                            }
+
+                            System.out.println("\nFinished all threads");
                         case 5:
                             break;
                         case 6:
@@ -138,12 +147,6 @@ public class Main {
                             break;
                     }
                 }
-
-                // Shut down threads
-                executor.shutdown();
-                while (!executor.isTerminated()) {
-                }
-                System.out.println("\nFinished all threads");
             }
     }
     // Uses given file name to create a txt file for query metadata
