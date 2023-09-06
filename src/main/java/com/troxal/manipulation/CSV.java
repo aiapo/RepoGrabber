@@ -28,7 +28,7 @@ public class CSV {
             fileName = fileInput.nextLine();
             fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
         }else{
-            fileName="Repos.csv";
+            fileName="Repos";
         }
         new File("./results").mkdirs();
         File file = new File("results/"+ fileName + ".csv");
@@ -100,7 +100,7 @@ public class CSV {
                 Scanner fileGrabber = new Scanner(System.in);
                 oldFile = fileGrabber.nextLine();
             }else{
-                oldFile="Repos.csv";
+                oldFile="Repos";
             }
             FileReader filereader = new FileReader("results/"+oldFile+".csv");
 
