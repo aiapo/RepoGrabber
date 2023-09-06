@@ -276,6 +276,10 @@ public class RepoGrab {
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
 
     private Boolean addRepo(Repo tempRepo){
+        // If no languages, don't add repo
+        if(tempRepo.getLanguages().getEdges().isEmpty())
+            return false;
+
         // List of all languages
         List<LanguageInfo> languageList = new ArrayList<>();
         // For top 3 languages

@@ -116,6 +116,7 @@ public class CSV {
 
             // Read all rows of the CSV
             for (int i=0;i<csvData.size();i++) {
+                Boolean ignoreRepo = false;
                 // Languages are stored seperated by a space in CSV, so split
                 String[] languages = csvData.get(i)[18].split("' ");
                 // tempLanguage to read into RepoInfo
@@ -123,36 +124,42 @@ public class CSV {
                 // Then the name and size are seperated by a colon
                 for (int j = 0; j < languages.length; j++) {
                     String[] tempLanguage = languages[j].split(":");
-                    // Add to tempLanguage the language
-                    tempLanguages.add(new LanguageInfo(tempLanguage[0],Integer.valueOf(tempLanguage[1])));
+                    try {
+                        // Add to tempLanguage the language
+                        tempLanguages.add(new LanguageInfo(tempLanguage[0], Integer.valueOf(tempLanguage[1])));
+                    }catch(ArrayIndexOutOfBoundsException e){
+                        ignoreRepo = true;
+                    }
                 }
 
-                // Temp RepoInfo, all rows (except tempLanguages) correspond to their value
-                RepoInfo tempRepo = new RepoInfo(
-                        csvData.get(i)[0],
-                        csvData.get(i)[1],
-                        csvData.get(i)[2],
-                        csvData.get(i)[3],
-                        csvData.get(i)[4],
-                        csvData.get(i)[5],
-                        csvData.get(i)[6],
-                        csvData.get(i)[7],
-                        Boolean.parseBoolean(csvData.get(i)[8]),
-                        Boolean.parseBoolean(csvData.get(i)[9]),
-                        Integer.valueOf(csvData.get(i)[10]),
-                        Integer.valueOf(csvData.get(i)[11]),
-                        Integer.valueOf(csvData.get(i)[12]),
-                        Integer.valueOf(csvData.get(i)[13]),
-                        Integer.valueOf(csvData.get(i)[14]),
-                        Integer.valueOf(csvData.get(i)[15]),
-                        Integer.valueOf(csvData.get(i)[16]),
-                        Integer.valueOf(csvData.get(i)[17]),
-                        tempLanguages,
-                        csvData.get(i)[19]
-                );
+                if (!ignoreRepo){
+                    // Temp RepoInfo, all rows (except tempLanguages) correspond to their value
+                    RepoInfo tempRepo = new RepoInfo(
+                            csvData.get(i)[0],
+                            csvData.get(i)[1],
+                            csvData.get(i)[2],
+                            csvData.get(i)[3],
+                            csvData.get(i)[4],
+                            csvData.get(i)[5],
+                            csvData.get(i)[6],
+                            csvData.get(i)[7],
+                            Boolean.parseBoolean(csvData.get(i)[8]),
+                            Boolean.parseBoolean(csvData.get(i)[9]),
+                            Integer.valueOf(csvData.get(i)[10]),
+                            Integer.valueOf(csvData.get(i)[11]),
+                            Integer.valueOf(csvData.get(i)[12]),
+                            Integer.valueOf(csvData.get(i)[13]),
+                            Integer.valueOf(csvData.get(i)[14]),
+                            Integer.valueOf(csvData.get(i)[15]),
+                            Integer.valueOf(csvData.get(i)[16]),
+                            Integer.valueOf(csvData.get(i)[17]),
+                            tempLanguages,
+                            csvData.get(i)[19]
+                    );
 
-                // Add the repos to the repo list
-                repos.add(tempRepo);
+                    // Add the repos to the repo list
+                    repos.add(tempRepo);
+                }
             }
 
             // Close reader
