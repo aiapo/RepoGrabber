@@ -2,10 +2,11 @@ package com.troxal.pojo;
 
 import com.troxal.pojo.LanguageInfo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RepoInfo {
+public class RepoInfo implements Serializable {
     private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate,branchName;
     private Boolean isArchived,isFork;
     private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits,totalCommitterCount;

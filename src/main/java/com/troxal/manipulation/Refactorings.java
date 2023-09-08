@@ -1,5 +1,7 @@
 package com.troxal.manipulation;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
 import gr.uom.java.xmi.UMLModel;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
@@ -9,28 +11,39 @@ import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringHandler;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Callable;
 
 import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.*;
 import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.createModel;
 
-public class Refactorings implements Callable {
-    private final GitService gitService;
+public class Refactorings implements Callable<Refactorings>, HazelcastInstanceAware {
+    private GitService gitService;
+    private String commitId,gitURI;
+    private List<Refactoring> refactorings;
     private Repository repository;
-    private final RefactoringHandler handler;
+    private RefactoringHandler handler;
     private RevCommit currentCommit;
+    private transient HazelcastInstance hazelcastInstance;
 
-    public Refactorings(GitService gitService, Repository repository, RefactoringHandler handler,
+    public Refactorings(GitService gitService, Repository repository, RefactoringHandler handler, String gitURI,
                         RevCommit currentCommit){
         this.gitService = gitService;
         this.repository = repository;
         this.handler = handler;
         this.currentCommit = currentCommit;
+        this.gitURI = gitURI;
+    }
+
+    public Refactorings (List<Refactoring> refactorings,String commitId,String gitURI){
+        this.refactorings = refactorings;
+        this.commitId = commitId;
+        this.gitURI = gitURI;
     }
 
     @Override
-    public List<Refactoring> call() throws Exception {
+    public Refactorings call() throws Exception {
         List<Refactoring> refactoringsAtRevision;
         String commitId = currentCommit.getId().getName();
         Set<String> filePathsBefore = new LinkedHashSet<String>();
@@ -60,6 +73,21 @@ public class Refactorings implements Callable {
             refactoringsAtRevision = Collections.emptyList();
         }
         handler.handle(commitId, refactoringsAtRevision);
-        return refactoringsAtRevision;
+        return new Refactorings(refactoringsAtRevision,commitId,gitURI);
+    }
+
+    @Override
+    public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    public List<Refactoring> getRefactorings() {
+        return refactorings;
+    }
+    public String getCommitId() {
+        return commitId;
+    }
+    public String getGitURI() {
+        return gitURI;
     }
 }

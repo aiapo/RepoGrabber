@@ -1,22 +1,19 @@
 package com.troxal;
 
+import com.troxal.jobs.RefMiner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
-import com.troxal.manipulation.RefMine;
 import io.github.cdimascio.dotenv.Dotenv;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 import static java.lang.System.exit;
 
 public class Main {
     public static void main(String[] args) {
-        final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
-        final Integer totalThreadPool = maxProcessors-1;
-        ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
@@ -127,19 +124,7 @@ public class Main {
                             metaData(followers,languages,users,percentLanguage,totalCommit,minTotalSize,sDate,rg,endDate);
                             break;
                         case 4:
-                            for(int j=0;j<rg.getRepos().size();j++){
-                                Runnable worker = new RefMine(rg.getRepo(j),false);
-                                executor.execute(worker);
-                            }
-
-                            // Shut down threads
-                            executor.shutdown();
-
-                            while (!executor.isTerminated()) {
-
-                            }
-
-                            System.out.println("\nFinished all threads");
+                            RefMiner.runJobs(rg);
                         case 5:
                             break;
                         case 6:

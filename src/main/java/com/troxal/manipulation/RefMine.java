@@ -1,33 +1,28 @@
 package com.troxal.manipulation;
 
 import com.troxal.pojo.RepoInfo;
-import gr.uom.java.xmi.UMLModel;
-import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
-import gr.uom.java.xmi.diff.UMLModelDiff;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.refactoringminer.api.GitHistoryRefactoringMiner;
 import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
-import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.*;
 
-public class RefMine implements Runnable {
+public class RefMine implements Callable<RefMine>, Serializable {
+    private String dir;
+    private String allRefactorings;
     private RepoInfo repo;
     private String branchName = null;
 
@@ -37,91 +32,55 @@ public class RefMine implements Runnable {
             branchName = repo.getBranchName();
     }
 
+    public RefMine(String allRefactorings,String dir){
+        this.allRefactorings = allRefactorings;
+        this.dir = dir;
+    }
+
     @Override
-    public void run() {
+    public RefMine call() {
         System.out.println("** Running RefMiner on "+repo.getName());
         String dir = "repos/"+repo.getName()+"_"+repo.getId();
-        if(runRef(repo.getUrl()+".git",dir,branchName)){
+
+        StringBuilder sb = new StringBuilder();
+
+        // Start JSON
+        sb.append("{").append("\n");
+        sb.append("\"").append("commits").append("\"").append(": ");
+        sb.append("[").append("\n");
+
+        // Run RefMiner and get inner JSON
+        sb.append(runRef(repo.getUrl()+".git",dir,branchName));
+
+        // End JSON
+        sb.append("]").append("\n");
+        sb.append("}");
+
+       allRefactorings = sb.toString();
+
+        if(allRefactorings!=null){
             System.out.println("** RefMiner successful");
             try {
                 FileUtils.deleteDirectory(new File(dir));
             }catch (IOException e){
-                System.out.println("[ERROR] Error deleting: "+e);
+                System.out.println("[ERROR] "+e);
             }
+            return new RefMine(allRefactorings,dir);
         }else
             System.out.println("** RefMiner failed");
+            return null;
     }
 
-    private static Boolean runRef(String gitURI,String dir,String branchName){
+    private static String runRef(String gitURI,String dir,String branchName){
         GitService gitService = new GitServiceImpl();
-        GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
+        StringBuilder allRefactorings = new StringBuilder();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
-            Path path = Paths.get("results/"+dir+".json");
-
-            // JSON creation/deletion
-            try {
-                Files.createDirectories(path.getParent());
-                if(Files.exists(path)) {
-                    Files.delete(path);
-                }
-                if(Files.notExists(path)) {
-                    Files.createFile(path);
-                }
-            } catch (IOException e) {
-                System.out.println("[ERROR] Error creating dir: "+e);
-            }
-
-            // Start JSON
-            StringBuilder sb = new StringBuilder();
-            sb.append("{").append("\n");
-            sb.append("\"").append("commits").append("\"").append(": ");
-            sb.append("[").append("\n");
-            try {
-                Files.write(path, sb.toString().getBytes());
-            } catch (IOException e) {
-                System.out.println("[ERROR] Error writing: "+e);
-            }
 
             // Run RefMiner
-            detectAll(repo, branchName, new RefactoringHandler() {
-                private int commitCount = 0;
+            allRefactorings.append(detectAll(repo, branchName,gitURI, new RefactoringHandler() {
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
-                    if(commitCount > 0) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(",").append("\n");
-                        try {
-                            Files.write(path, sb.toString().getBytes(), StandardOpenOption.APPEND);
-                        } catch (IOException e) {
-                            System.out.println("[ERROR] Error writing: "+e);
-                        }
-                    }
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("{").append("\n");
-                    sb.append("\t").append("\"").append("repository").append("\"").append(": ").append("\"").append(gitURI).append("\"").append(",").append("\n");
-                    sb.append("\t").append("\"").append("sha1").append("\"").append(": ").append("\"").append(commitId).append("\"").append(",").append("\n");
-                    String url = GitHistoryRefactoringMinerImpl.extractCommitURL(gitURI, commitId);
-                    sb.append("\t").append("\"").append("url").append("\"").append(": ").append("\"").append(url).append("\"").append(",").append("\n");
-                    sb.append("\t").append("\"").append("refactorings").append("\"").append(": ");
-                    sb.append("[");
-                    int counter = 0;
-                    for(Refactoring refactoring : refactorings) {
-                        sb.append(refactoring.toJSON());
-                        if(counter < refactorings.size()-1) {
-                            sb.append(",");
-                        }
-                        sb.append("\n");
-                        counter++;
-                    }
-                    sb.append("]").append("\n");
-                    sb.append("}");
-                    try {
-                        Files.write(path, sb.toString().getBytes(), StandardOpenOption.APPEND);
-                    } catch (IOException e) {
-                        System.out.println("[ERROR] Error writing: "+e);
-                    }
-                    commitCount++;
                 }
 
                 @Override
@@ -134,27 +93,24 @@ public class RefMine implements Runnable {
                 public void handleException(String commit, Exception e) {
                     System.out.println("[ERROR] Error processing commit " + commit);
                 }
-            });
-            sb = new StringBuilder();
-            sb.append("]").append("\n");
-            sb.append("}");
-            try {
-                Files.write(path, sb.toString().getBytes(), StandardOpenOption.APPEND);
-            } catch (IOException e) {
-                System.out.println("[ERROR] Error writing: "+e);
-            }
-            return true;
+            }));
+            //System.out.println(allRefactorings.toString());
+            return allRefactorings.toString();
 
         }catch (Exception e){
             System.out.println("[ERROR] Exception: "+e);
-            return false;
+            return null;
         }
     }
 
-    private static void detect(GitService gitService, Repository repository, final RefactoringHandler handler, Iterator<RevCommit> i) {
+    private static String detect(GitService gitService, Repository repository, final RefactoringHandler handler,
+                                 String gitURI, Iterator<RevCommit> i) {
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
         ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
+
+        List<Future> rf = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
 
         int commitsCount = 0;
         int errorCommitsCount = 0;
@@ -168,12 +124,7 @@ public class RefMine implements Runnable {
         while (i.hasNext()) {
             RevCommit currentCommit = i.next();
             try {
-
-                Future refactoring = executor.submit(new Refactorings(gitService, repository, handler, currentCommit));
-                //List<Refactoring> refactoringsAtRevision = (List<Refactoring>) refactoring.get();
-
-                //refactoringsCount += refactoringsAtRevision.size();
-
+                rf.add(executor.submit(new Refactorings(gitService, repository, handler, gitURI, currentCommit)));
             } catch (Exception e) {
                 System.out.println(String.format("Ignored revision %s due to error %s", currentCommit.getId().getName(),e));
                 handler.handleException(currentCommit.getId().getName(),e);
@@ -188,7 +139,44 @@ public class RefMine implements Runnable {
             }
         }
 
-        handler.onFinish(refactoringsCount, commitsCount, errorCommitsCount);
+        Integer commitCount = 0;
+        for(Future<Refactorings> fut : rf){
+            try {
+                Refactorings refactorings = fut.get();
+                System.out.println("[INFO]["+new Date()+"] Finished processing commit "+refactorings.getCommitId());
+                int counter = 0;
+
+                if(commitCount > 0) {
+                    sb.append(",").append("\n");
+                }
+                sb.append("{").append("\n");
+                sb.append("\t").append("\"").append("repository").append("\"").append(": ").append("\"").append(refactorings.getGitURI()).append("\"").append(",").append("\n");
+                sb.append("\t").append("\"").append("sha1").append("\"").append(": ").append("\"").append(refactorings.getCommitId()).append("\"").append(",").append("\n");
+                String url = GitHistoryRefactoringMinerImpl.extractCommitURL(refactorings.getGitURI(), refactorings.getCommitId());
+                sb.append("\t").append("\"").append("url").append("\"").append(": ").append("\"").append(url).append(
+                        "\"").append(",").append("\n");
+                sb.append("\t").append("\"").append("refactorings").append("\"").append(": ");
+                sb.append("[");
+
+                for(Refactoring rr : refactorings.getRefactorings()){
+                    sb.append(rr.toJSON());
+                    if(counter < refactorings.getRefactorings().size()-1) {
+                        sb.append(",");
+                    }
+                    sb.append("\n");
+                    counter++;
+                }
+
+                sb.append("]").append("\n");
+                sb.append("}");
+
+                commitCount++;
+
+            } catch (InterruptedException | ExecutionException e) {
+                System.out.println("[ERROR] "+e);
+            }
+        }
+
         System.out.println(String.format("Analyzed %s [Commits: %d, Errors: %d, Refactorings: %d]", projectName, commitsCount, errorCommitsCount, refactoringsCount));
 
         // Shut down threads
@@ -199,9 +187,12 @@ public class RefMine implements Runnable {
         }
 
         System.out.println("\nFinished all threads for repo "+projectName);
+        return sb.toString();
     }
 
-    public static void detectAll(Repository repository, String branch, final RefactoringHandler handler) throws Exception {
+    public static String detectAll(Repository repository, String branch, String gitURI,
+                                   final RefactoringHandler handler) throws Exception {
+        String sb;
         GitService gitService = new GitServiceImpl() {
             @Override
             public boolean isCommitAnalyzed(String sha1) {
@@ -210,10 +201,17 @@ public class RefMine implements Runnable {
         };
         RevWalk walk = gitService.createAllRevsWalk(repository, branch);
         try {
-            detect(gitService, repository, handler, walk.iterator());
+            sb = detect(gitService, repository, handler, gitURI, walk.iterator());
         } finally {
             walk.dispose();
         }
+        return sb;
     }
 
+    public String getDir() {
+        return dir;
+    }
+    public String getAllRefactorings(){
+        return allRefactorings;
+    }
 }

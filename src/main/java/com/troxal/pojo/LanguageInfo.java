@@ -1,6 +1,8 @@
 package com.troxal.pojo;
 
-public class LanguageInfo {
+import java.io.Serializable;
+
+public class LanguageInfo implements Serializable {
     private String name;
     private Integer size;
 
