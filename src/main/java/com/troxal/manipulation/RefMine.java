@@ -22,7 +22,7 @@ import java.util.concurrent.*;
 
 public class RefMine implements Callable<RefMine>, Serializable {
     private String dir;
-    private String allRefactorings;
+    private List<String> allRefactorings;
     private RepoInfo repo;
     private String branchName = null;
 
@@ -32,7 +32,7 @@ public class RefMine implements Callable<RefMine>, Serializable {
             branchName = repo.getBranchName();
     }
 
-    public RefMine(String allRefactorings,String dir){
+    public RefMine(List<String> allRefactorings,String dir){
         this.allRefactorings = allRefactorings;
         this.dir = dir;
     }
@@ -42,21 +42,8 @@ public class RefMine implements Callable<RefMine>, Serializable {
         System.out.println("** Running RefMiner on "+repo.getName());
         String dir = "repos/"+repo.getName()+"_"+repo.getId();
 
-        StringBuilder sb = new StringBuilder();
-
-        // Start JSON
-        sb.append("{").append("\n");
-        sb.append("\"").append("commits").append("\"").append(": ");
-        sb.append("[").append("\n");
-
         // Run RefMiner and get inner JSON
-        sb.append(runRef(repo.getUrl()+".git",dir,branchName));
-
-        // End JSON
-        sb.append("]").append("\n");
-        sb.append("}");
-
-       allRefactorings = sb.toString();
+        List<String> allRefactorings = runRef(repo.getUrl()+".git",dir,branchName);
 
         if(allRefactorings!=null){
             System.out.println("** RefMiner successful");
@@ -71,14 +58,13 @@ public class RefMine implements Callable<RefMine>, Serializable {
             return null;
     }
 
-    private static String runRef(String gitURI,String dir,String branchName){
+    private static List<String> runRef(String gitURI,String dir,String branchName){
         GitService gitService = new GitServiceImpl();
-        StringBuilder allRefactorings = new StringBuilder();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
 
             // Run RefMiner
-            allRefactorings.append(detectAll(repo, branchName,gitURI, new RefactoringHandler() {
+            return detectAll(repo, branchName,gitURI, new RefactoringHandler() {
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
                 }
@@ -93,9 +79,7 @@ public class RefMine implements Callable<RefMine>, Serializable {
                 public void handleException(String commit, Exception e) {
                     System.out.println("[ERROR] Error processing commit " + commit);
                 }
-            }));
-            //System.out.println(allRefactorings.toString());
-            return allRefactorings.toString();
+            });
 
         }catch (Exception e){
             System.out.println("[ERROR] Exception: "+e);
@@ -103,14 +87,14 @@ public class RefMine implements Callable<RefMine>, Serializable {
         }
     }
 
-    private static String detect(GitService gitService, Repository repository, final RefactoringHandler handler,
+    private static List<String> detect(GitService gitService, Repository repository, final RefactoringHandler handler,
                                  String gitURI, Iterator<RevCommit> i) {
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
         ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
 
+        List<String> refactor = new ArrayList<>();
         List<Future> rf = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
 
         int commitsCount = 0;
         int errorCommitsCount = 0;
@@ -142,6 +126,7 @@ public class RefMine implements Callable<RefMine>, Serializable {
         Integer commitCount = 0;
         for(Future<Refactorings> fut : rf){
             try {
+                StringBuilder sb = new StringBuilder();
                 Refactorings refactorings = fut.get();
                 System.out.println("[INFO]["+new Date()+"] Finished processing commit "+refactorings.getCommitId());
                 int counter = 0;
@@ -170,6 +155,8 @@ public class RefMine implements Callable<RefMine>, Serializable {
                 sb.append("]").append("\n");
                 sb.append("}");
 
+                refactor.add(sb.toString());
+
                 commitCount++;
 
             } catch (InterruptedException | ExecutionException e) {
@@ -187,12 +174,12 @@ public class RefMine implements Callable<RefMine>, Serializable {
         }
 
         System.out.println("\nFinished all threads for repo "+projectName);
-        return sb.toString();
+        return refactor;
     }
 
-    public static String detectAll(Repository repository, String branch, String gitURI,
+    public static List<String> detectAll(Repository repository, String branch, String gitURI,
                                    final RefactoringHandler handler) throws Exception {
-        String sb;
+        List<String> sb;
         GitService gitService = new GitServiceImpl() {
             @Override
             public boolean isCommitAnalyzed(String sha1) {
@@ -211,7 +198,7 @@ public class RefMine implements Callable<RefMine>, Serializable {
     public String getDir() {
         return dir;
     }
-    public String getAllRefactorings(){
+    public List<String> getAllRefactorings(){
         return allRefactorings;
     }
 }
