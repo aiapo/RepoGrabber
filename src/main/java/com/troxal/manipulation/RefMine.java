@@ -22,7 +22,7 @@ import java.util.concurrent.*;
 
 public class RefMine implements Callable<RefMine>, Serializable {
     private String dir;
-    private List<String> allRefactorings;
+    private List<Refactorings> allRefactorings;
     private RepoInfo repo;
     private String branchName = null;
 
@@ -32,7 +32,7 @@ public class RefMine implements Callable<RefMine>, Serializable {
             branchName = repo.getBranchName();
     }
 
-    public RefMine(List<String> allRefactorings,String dir){
+    public RefMine(List<Refactorings> allRefactorings,String dir){
         this.allRefactorings = allRefactorings;
         this.dir = dir;
     }
@@ -43,22 +43,17 @@ public class RefMine implements Callable<RefMine>, Serializable {
         String dir = "repos/"+repo.getName()+"_"+repo.getId();
 
         // Run RefMiner and get inner JSON
-        List<String> allRefactorings = runRef(repo.getUrl()+".git",dir,branchName);
+        List<Refactorings> allRefactorings = runRef(repo.getUrl()+".git",dir,branchName);
 
         if(allRefactorings!=null){
             System.out.println("** RefMiner successful");
-            try {
-                FileUtils.deleteDirectory(new File(dir));
-            }catch (IOException e){
-                System.out.println("[ERROR] "+e);
-            }
             return new RefMine(allRefactorings,dir);
         }else
             System.out.println("** RefMiner failed");
             return null;
     }
 
-    private static List<String> runRef(String gitURI,String dir,String branchName){
+    private static List<Refactorings> runRef(String gitURI,String dir,String branchName){
         GitService gitService = new GitServiceImpl();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
@@ -87,13 +82,12 @@ public class RefMine implements Callable<RefMine>, Serializable {
         }
     }
 
-    private static List<String> detect(GitService gitService, Repository repository, final RefactoringHandler handler,
+    private static List<Refactorings> detect(GitService gitService, Repository repository, final RefactoringHandler handler,
                                  String gitURI, Iterator<RevCommit> i) {
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
         ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
 
-        List<String> refactor = new ArrayList<>();
         List<Future> rf = new ArrayList<>();
 
         int commitsCount = 0;
@@ -123,63 +117,30 @@ public class RefMine implements Callable<RefMine>, Serializable {
             }
         }
 
-        Integer commitCount = 0;
+        List<Refactorings> Refactor = new ArrayList<>();
         for(Future<Refactorings> fut : rf){
             try {
-                StringBuilder sb = new StringBuilder();
                 Refactorings refactorings = fut.get();
                 System.out.println("[INFO]["+new Date()+"] Finished processing commit "+refactorings.getCommitId());
-                int counter = 0;
 
-                if(commitCount > 0) {
-                    sb.append(",").append("\n");
-                }
-                sb.append("{").append("\n");
-                sb.append("\t").append("\"").append("repository").append("\"").append(": ").append("\"").append(refactorings.getGitURI()).append("\"").append(",").append("\n");
-                sb.append("\t").append("\"").append("sha1").append("\"").append(": ").append("\"").append(refactorings.getCommitId()).append("\"").append(",").append("\n");
-                String url = GitHistoryRefactoringMinerImpl.extractCommitURL(refactorings.getGitURI(), refactorings.getCommitId());
-                sb.append("\t").append("\"").append("url").append("\"").append(": ").append("\"").append(url).append(
-                        "\"").append(",").append("\n");
-                sb.append("\t").append("\"").append("refactorings").append("\"").append(": ");
-                sb.append("[");
-
-                for(Refactoring rr : refactorings.getRefactorings()){
-                    sb.append(rr.toJSON());
-                    if(counter < refactorings.getRefactorings().size()-1) {
-                        sb.append(",");
-                    }
-                    sb.append("\n");
-                    counter++;
-                }
-
-                sb.append("]").append("\n");
-                sb.append("}");
-
-                refactor.add(sb.toString());
-
-                commitCount++;
-
+                Refactor.add(refactorings);
             } catch (InterruptedException | ExecutionException e) {
                 System.out.println("[ERROR] "+e);
             }
         }
 
-        System.out.println(String.format("Analyzed %s [Commits: %d, Errors: %d, Refactorings: %d]", projectName, commitsCount, errorCommitsCount, refactoringsCount));
-
         // Shut down threads
         executor.shutdown();
 
         while (!executor.isTerminated()) {
-
         }
 
-        System.out.println("\nFinished all threads for repo "+projectName);
-        return refactor;
+        System.out.println("\nFinished all sub-threads for repo "+projectName);
+        return Refactor;
     }
 
-    public static List<String> detectAll(Repository repository, String branch, String gitURI,
-                                   final RefactoringHandler handler) throws Exception {
-        List<String> sb;
+    public static List<Refactorings> detectAll(Repository repository, String branch, String gitURI, final RefactoringHandler handler) throws Exception {
+        List<Refactorings> Refactor;
         GitService gitService = new GitServiceImpl() {
             @Override
             public boolean isCommitAnalyzed(String sha1) {
@@ -188,17 +149,17 @@ public class RefMine implements Callable<RefMine>, Serializable {
         };
         RevWalk walk = gitService.createAllRevsWalk(repository, branch);
         try {
-            sb = detect(gitService, repository, handler, gitURI, walk.iterator());
+            Refactor = detect(gitService, repository, handler, gitURI, walk.iterator());
         } finally {
             walk.dispose();
         }
-        return sb;
+        return Refactor;
     }
 
     public String getDir() {
         return dir;
     }
-    public List<String> getAllRefactorings(){
+    public List<Refactorings> getAllRefactorings(){
         return allRefactorings;
     }
 }
