@@ -55,12 +55,22 @@ public class Refactorings implements Runnable {
                 UMLModelDiff modelDiff = parentUMLModel.diff(currentUMLModel);
                 refactoringsAtRevision = modelDiff.getRefactorings();
                 refactoringsAtRevision.addAll(moveSourceFolderRefactorings);
+                moveSourceFolderRefactorings.clear();
             } else {
                 //logger.info(String.format("Ignored revision %s with no changes in java files", commitId));
                 refactoringsAtRevision = Collections.emptyList();
             }
             handler.handle(commitId, refactoringsAtRevision);
+
+            // garbage collection
             refactoringsAtRevision.clear();
+            filePathsBefore.clear();
+            fileContentsCurrent.clear();
+            renamedFilesHint.clear();
+            repositoryDirectoriesBefore.clear();
+            repositoryDirectoriesCurrent.clear();
+            fileContentsBefore.clear();
+            fileContentsCurrent.clear();
         } catch (Exception e) {
             System.out.println("[ERROR] "+e);
         }

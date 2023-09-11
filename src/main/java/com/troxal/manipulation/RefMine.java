@@ -72,8 +72,8 @@ public class RefMine implements Runnable, Serializable {
                             System.out.println("[INFO] Added refactoring: "+refactoring.getName());
                         else
                             System.out.println("[ERROR] Failed to add refactoring: "+refactoring.getName());
-
                     }
+                    refactorings.clear();
                 }
 
                 @Override
