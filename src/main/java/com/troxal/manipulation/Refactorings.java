@@ -15,7 +15,7 @@ import java.util.concurrent.Callable;
 import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.*;
 import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.createModel;
 
-public class Refactorings implements Runnable {
+public class Refactorings implements Callable {
     private final GitService gitService;
     private Repository repository;
     private final RefactoringHandler handler;
@@ -30,7 +30,7 @@ public class Refactorings implements Runnable {
     }
 
     @Override
-    public void run() {
+    public Boolean call() {
         try{
             List<Refactoring> refactoringsAtRevision;
             String commitId = currentCommit.getId().getName();
@@ -71,8 +71,11 @@ public class Refactorings implements Runnable {
             repositoryDirectoriesCurrent.clear();
             fileContentsBefore.clear();
             fileContentsCurrent.clear();
+
+            return true;
         } catch (Exception e) {
             System.out.println("[ERROR] "+e);
+            return false;
         }
     }
 }
