@@ -39,6 +39,13 @@ public class RefMine implements Runnable, Serializable {
             System.out.println("[INFO] ** RefMiner success on "+dir);
         }else
             System.out.println("[ERROR] ** RefMiner failed on "+dir);
+
+        // idea is to delete the clone if we don't need it anymore
+        try {
+            FileUtils.deleteDirectory(new File(dir));
+        }catch (IOException e){
+            System.out.println("[ERROR] "+e);
+        }
     }
 
     private Boolean runRef(String gitURI, String dir, String branchName){
