@@ -45,20 +45,6 @@ public class RefMine implements Runnable, Serializable {
         GitService gitService = new GitServiceImpl();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
-/*
-            Path path = Paths.get("results/"+dir+".json");
-            // JSON creation/deletion
-            try {
-                Files.createDirectories(path.getParent());
-                if(Files.exists(path)) {
-                    Files.delete(path);
-                }
-                if(Files.notExists(path)) {
-                    Files.createFile(path);
-                }
-            } catch (IOException e) {
-                System.out.println("[ERROR] Error creating dir: "+e);
-            }*/
 
             Object[] newRepo = {null,dir};
             if(db.insert("Repositories",newRepo))
@@ -100,7 +86,7 @@ public class RefMine implements Runnable, Serializable {
 
         }catch (Exception e){
             System.out.println("[ERROR] Exception: "+e);
-            return null;
+            return false;
         }
     }
 
