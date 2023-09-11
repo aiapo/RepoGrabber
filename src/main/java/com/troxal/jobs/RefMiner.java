@@ -22,7 +22,7 @@ public class RefMiner {
 
         List<Future> commitRuns = new ArrayList<>();
         for(int j=0;j<repos.getRepos().size();j++){
-            executor.execute(new RefMine(repos.getRepo(j), false, db, service,commitRuns));
+            executor.execute(new RefMine(repos.getRepo(j), false, db, service));
         }
 
         // Shut down threads

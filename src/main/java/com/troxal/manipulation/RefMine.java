@@ -28,12 +28,10 @@ public class RefMine implements Runnable, Serializable {
     private Integer totalCommits = 0;
     List<Future> commitRuns = new ArrayList<>();
 
-    public RefMine(RepoInfo repo, Boolean runAllBranches, Database db, ExecutorService service,
-                   List<Future> commitRuns){
+    public RefMine(RepoInfo repo, Boolean runAllBranches, Database db, ExecutorService service){
         this.repo=repo;
         this.db=db;
         this.service=service;
-        this.commitRuns=commitRuns;
         if(!runAllBranches)
             branchName = repo.getBranchName();
     }
@@ -127,8 +125,9 @@ public class RefMine implements Runnable, Serializable {
         for(Future<Boolean> fut : commitRuns){
             try {
                 Boolean commit = fut.get();
-                if (commit)
-                    System.out.println("[DEBUG] Done thread");
+                if (!commit){
+                    System.out.println("[ERROR] Error with thread!");
+                }
             }catch (Exception e) {
                 System.out.println("[ERROR] " + e);
             }
