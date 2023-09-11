@@ -42,12 +42,7 @@ public class RefMine implements Runnable, Serializable {
         }else
             System.out.println("[ERROR] ** RefMiner failed on "+dir);
 
-        // idea is to delete the clone if we don't need it anymore
-        try {
-            FileUtils.deleteDirectory(new File(dir));
-        }catch (IOException e){
-            System.out.println("[ERROR] "+e);
-        }
+        Runtime.getRuntime().gc();
     }
 
     private Boolean runRef(String gitURI, String dir, String branchName){
@@ -83,6 +78,13 @@ public class RefMine implements Runnable, Serializable {
 
                 @Override
                 public void onFinish(int refactoringsCount, int commitsCount, int errorCommitsCount) {
+                    // idea is to delete the clone if we don't need it anymore
+                    try {
+                        FileUtils.deleteDirectory(new File(dir));
+                    }catch (IOException e){
+                        System.out.println("[ERROR] "+e);
+                    }
+                    repo.close();
                 }
 
                 @Override
@@ -131,5 +133,6 @@ public class RefMine implements Runnable, Serializable {
         } finally {
             walk.dispose();
         }
+        walk.close();
     }
 }

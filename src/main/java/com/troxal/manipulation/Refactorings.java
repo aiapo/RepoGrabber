@@ -60,6 +60,7 @@ public class Refactorings implements Runnable {
                 refactoringsAtRevision = Collections.emptyList();
             }
             handler.handle(commitId, refactoringsAtRevision);
+            refactoringsAtRevision.clear();
         } catch (Exception e) {
             System.out.println("[ERROR] "+e);
         }
