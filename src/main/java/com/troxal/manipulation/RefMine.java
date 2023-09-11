@@ -2,6 +2,7 @@ package com.troxal.manipulation;
 
 import com.troxal.database.Database;
 import com.troxal.pojo.RepoInfo;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -11,6 +12,7 @@ import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.util.GitServiceImpl;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
