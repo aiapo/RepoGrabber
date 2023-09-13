@@ -88,9 +88,9 @@ public class Database {
     public ResultSet select(String table, Object[] columns, String condition, Object[] params) throws SQLException {
         checkLock();
         query = new QueryBuilder();
-        if (condition == "")
+        if (condition.equals(""))
             query.select(columns).from(table);
-        else if(condition=="MAX")
+        else if(condition.equals("MAX"))
             query.max(columns).from(table);
         else
             query.select(columns).from(table).where(condition);

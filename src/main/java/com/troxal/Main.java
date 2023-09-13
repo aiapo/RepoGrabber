@@ -54,7 +54,7 @@ public class Main {
                    String importPrompt = "Do you want to import a CSV to skip the GitHub search? (y/n): ";
                    importCSV = paramGetterYN(importPrompt,errorYN,scn);
 
-                    if (importCSV.toLowerCase().equals("n")) {
+                    if (importCSV.equalsIgnoreCase("n")) {
                         String followPrompt = "What is the minimum amount of followers on project wanted? (ex: '50'): ";
                         followers = paramGetterInt(followPrompt,errorInt,scn);
 
@@ -95,7 +95,7 @@ public class Main {
                 System.out.println("\n** Grabbed repos!");
 
                 while (menuChoice != 5 && menuChoice != 6) {
-                    if (menuOrder == "") {
+                    if (menuOrder.equals("")) {
 
                         System.out.println("** Menu: **" +
                                 "\n 1. Print all repos" +
@@ -189,7 +189,7 @@ public class Main {
         boolean success = false;
         while (!success) {
             param = scn.next();
-            if (param.toLowerCase().equals("y") || param.toLowerCase().equals("n")){
+            if (param.equalsIgnoreCase("y") || param.equalsIgnoreCase("n")){
                 success = true;
             }else{
                 System.out.println(error);
