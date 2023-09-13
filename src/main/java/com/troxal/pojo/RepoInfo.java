@@ -7,15 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepoInfo implements Serializable {
-    private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate,branchName;
-    private Boolean isArchived,isFork;
-    private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits,totalCommitterCount;
+    private String id,name,url,description,primaryLanguage,creationDate,updateDate,pushDate,branchName,owner,archivedAt;
+    private Boolean isArchived,isFork,isEmpty,isLocked,isDisabled,isTemplate;
+    private Integer totalIssueUsers,totalMentionableUsers,totalProjectSize,totalCommits,totalCommitterCount,issueCount;
     private Integer forkCount,starCount,watchCount;
     private List<LanguageInfo> languages = new ArrayList<>();
 
     public RepoInfo(
             String id,
             String name,
+            String owner,
             String url,
             String description,
             String primaryLanguage,
@@ -23,12 +24,18 @@ public class RepoInfo implements Serializable {
             String updateDate,
             String pushDate,
             Boolean isArchived,
+            String archivedAt,
             Boolean isFork,
+            Boolean isEmpty,
+            Boolean isLocked,
+            Boolean isDisabled,
+            Boolean isTemplate,
             Integer totalIssueUsers,
             Integer totalMentionableUsers,
             Integer totalCommitterCount,
             Integer totalProjectSize,
             Integer totalCommits,
+            Integer issueCount,
             Integer forkCount,
             Integer starCount,
             Integer watchCount,
@@ -54,6 +61,13 @@ public class RepoInfo implements Serializable {
         setStarCount(starCount);
         setWatchCount(watchCount);
         setBranchName(branchName);
+        setIsDisabled(isDisabled);
+        setIsEmpty(isEmpty);
+        setIsLocked(isLocked);
+        setIsTemplate(isTemplate);
+        setArchivedAt(archivedAt);
+        setIssueCount(issueCount);
+        setOwner(owner);
     }
 
     // Set/Get ID
@@ -70,6 +84,14 @@ public class RepoInfo implements Serializable {
     }
     public String getName(){
         return name;
+    }
+
+    // Set/Get owner
+    public void setOwner(String owner){
+        this.owner=owner;
+    }
+    public String getOwner(){
+        return owner;
     }
 
     // Set/Get URL
@@ -118,6 +140,14 @@ public class RepoInfo implements Serializable {
     }
     public String getPushDate(){
         return pushDate;
+    }
+
+    // Set/Get archivedAt
+    public void setArchivedAt(String archivedAt){
+        this.archivedAt=archivedAt;
+    }
+    public String getArchivedAt(){
+        return archivedAt;
     }
 
     // Set/Get totalMentionableUsers
@@ -176,6 +206,14 @@ public class RepoInfo implements Serializable {
         return watchCount;
     }
 
+    // Set/Get issueCount
+    public void setIssueCount(Integer issueCount){
+        this.issueCount=issueCount;
+    }
+    public Integer getIssueCount(){
+        return issueCount;
+    }
+
     // Set/Get isArchived
     public void setIsArchived(Boolean isArchived){
         this.isArchived=isArchived;
@@ -190,6 +228,38 @@ public class RepoInfo implements Serializable {
     }
     public Boolean getIsFork(){
         return isFork;
+    }
+
+    // Set/Get isEmpty
+    public void setIsEmpty(Boolean isEmpty){
+        this.isEmpty=isEmpty;
+    }
+    public Boolean getIsEmpty(){
+        return isEmpty;
+    }
+
+    // Set/Get isLocked
+    public void setIsLocked(Boolean isLocked){
+        this.isLocked=isLocked;
+    }
+    public Boolean getIsLocked(){
+        return isLocked;
+    }
+
+    // Set/Get isDisabled
+    public void setIsDisabled(Boolean isDisabled){
+        this.isDisabled=isDisabled;
+    }
+    public Boolean getIsDisabled(){
+        return isDisabled;
+    }
+
+    // Set/Get isTemplate
+    public void setIsTemplate(Boolean isTemplate){
+        this.isTemplate=isTemplate;
+    }
+    public Boolean getIsTemplate(){
+        return isTemplate;
     }
 
     public void setLanguages(List<LanguageInfo> languages){

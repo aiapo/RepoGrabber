@@ -23,7 +23,7 @@ import java.util.concurrent.Future;
 public class RefMine implements Runnable, Serializable {
     private RepoInfo repo;
     private String branchName = null;
-    private static Database db = null;
+    private Database db = null;
     private ExecutorService service = null;
     private Integer totalCommits = 0;
     List<Future> commitRuns = new ArrayList<>();

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.troxal.database.Database;
 import com.troxal.request.GitHub;
 import com.troxal.request.Requests;
 import com.troxal.pojo.*;
@@ -26,10 +27,11 @@ public class RepoGrab {
     private Boolean ranAtLeastOnce=false;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-01-15"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
+    private Database db = null;
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
-    public RepoGrab(Integer followers,String language,Integer users,Integer percentLanguage,Integer totalCommit,
-                    Integer minTotalSize,Integer maxTotalSize,String sDate, String endDate) {
+    public RepoGrab(Integer followers, String language, Integer users, Integer percentLanguage, Integer totalCommit,
+                    Integer minTotalSize, Integer maxTotalSize, String sDate, String endDate, Database db) {
         this.followers=followers;
         this.language=language;
         this.users=users;
@@ -40,12 +42,14 @@ public class RepoGrab {
         this.beginningDate = LocalDate.parse(sDate);
         this.endingDate = LocalDate.parse(endDate);
         this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
+        this.db=db;
 
         getRepos(null);
     }
 
     // Import CSV constructor
-    public RepoGrab(Boolean headless){
+    public RepoGrab(Boolean headless, Database db){
+        this.db=db;
         repoCollection = new HashSet<>(CSV.read(headless));
     }
 
@@ -175,17 +179,23 @@ public class RepoGrab {
                             "... on Repository { " +
                                 "id " +
                                 "name " +
+                                "owner { username: login } " +
                                 "url " +
                                 "description " +
                                 "createdAt " +
                                 "updatedAt " +
                                 "pushedAt " +
                                 "isArchived " +
+                                "archivedAt " +
                                 "isPrivate " +
                                 "isFork " +
                                 "isEmpty " +
+                                "isLocked " +
+                                "isDisabled " +
+                                "isTemplate " +
                                 "primaryLanguage { name } " +
                                 "forkCount " +
+                                "issues { totalCount } " +
                                 "stargazerCount " +
                                 "watchers { totalCount } " +
                                 "issueUsers: assignableUsers { totalCount } " +
@@ -235,13 +245,13 @@ public class RepoGrab {
                     }
                 }
 
-                try {
+                //try {
                     // Wait 3 seconds each query to reduce API limits
-                    System.out.println("[INFO] Wait 3 seconds...");
-                    TimeUnit.SECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    System.out.println("[ERROR] Error trying to wait: \n"+e);
-                }
+                    //System.out.println("[INFO] Wait 3 seconds...");
+                    //TimeUnit.SECONDS.sleep(3);
+                //} catch (InterruptedException e) {
+                   // System.out.println("[ERROR] Error trying to wait: \n"+e);
+                //}
 
                 // While there is a next page AND you still have at least 100 API calls left
                 if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
@@ -312,30 +322,36 @@ public class RepoGrab {
             return false;
 
         //If not ignored repo, add to repoCollection array
-        repoCollection.add(
-                new RepoInfo(
-                        tempRepo.getId(),
-                        tempRepo.getName(),
-                        tempRepo.getUrl(),
-                        tempRepo.getDescription(),
-                        tempRepo.getPrimaryLanguage().getName(),
-                        tempRepo.getCreatedAt(),
-                        tempRepo.getUpdatedAt(),
-                        tempRepo.getPushedAt(),
-                        tempRepo.getIsArchived(),
-                        tempRepo.getIsFork(),
-                        tempRepo.getIssueUsers().getTotalCount(),
-                        tempRepo.getMentionableUsers().getTotalCount(),
-                        commiterCount,
-                        tempRepo.getLanguages().getTotalSize(),
-                        tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
-                        tempRepo.getForkCount(),
-                        tempRepo.getStargazerCount(),
-                        tempRepo.getWatchers().getTotalCount(),
-                        languageList,
-                        tempRepo.getMainBranch().getName()
-                )
+        RepoInfo Repo = new RepoInfo(
+                tempRepo.getId(),
+                tempRepo.getName(),
+                tempRepo.getOwner().getUsername(),
+                tempRepo.getUrl(),
+                tempRepo.getDescription(),
+                tempRepo.getPrimaryLanguage().getName(),
+                tempRepo.getCreatedAt(),
+                tempRepo.getUpdatedAt(),
+                tempRepo.getPushedAt(),
+                tempRepo.getIsArchived(),
+                tempRepo.getArchivedAt(),
+                tempRepo.getIsFork(),
+                tempRepo.getIsEmpty(),
+                tempRepo.getIsLocked(),
+                tempRepo.getIsDisabled(),
+                tempRepo.getIsTemplate(),
+                tempRepo.getIssueUsers().getTotalCount(),
+                tempRepo.getMentionableUsers().getTotalCount(),
+                commiterCount,
+                tempRepo.getLanguages().getTotalSize(),
+                tempRepo.getMainBranch().getTarget().getHistory().getTotalCount(),
+                tempRepo.getIssues().getTotalCount(),
+                tempRepo.getForkCount(),
+                tempRepo.getStargazerCount(),
+                tempRepo.getWatchers().getTotalCount(),
+                languageList,
+                tempRepo.getMainBranch().getName()
         );
+        repoCollection.add(Repo);
         return true;
     }
 

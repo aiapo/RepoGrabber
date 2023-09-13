@@ -1,5 +1,7 @@
 package com.troxal;
 
+import com.troxal.database.Database;
+import com.troxal.database.Manager;
 import com.troxal.jobs.RefMiner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
@@ -14,6 +16,7 @@ import static java.lang.System.exit;
 
 public class Main {
     public static void main(String[] args) {
+        Database db = new Manager().access();
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
@@ -85,9 +88,9 @@ public class Main {
                 System.out.println("\n** Grabbing repos!");
                 if (importCSV.toLowerCase().equals("n")) {
                     rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, minTotalSize,
-                            maxTotalSize, sDate, endDate);
+                            maxTotalSize, sDate, endDate,db);
                 } else {
-                    rg = new RepoGrab(headless);
+                    rg = new RepoGrab(headless,db);
                 }
                 System.out.println("\n** Grabbed repos!");
 
@@ -124,7 +127,7 @@ public class Main {
                             metaData(followers,languages,users,percentLanguage,totalCommit,minTotalSize,sDate,rg,endDate);
                             break;
                         case 4:
-                            RefMiner.runJobs(rg);
+                            RefMiner.runJobs(rg,db);
                         case 5:
                             break;
                         case 6:

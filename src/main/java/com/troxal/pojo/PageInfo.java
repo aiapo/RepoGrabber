@@ -1,3 +1,4 @@
+
 package com.troxal.pojo;
 
 import javax.annotation.Generated;
@@ -7,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "endCursor",
-        "hasNextPage"
+    "endCursor",
+    "hasNextPage"
 })
 @Generated("jsonschema2pojo")
 public class PageInfo {

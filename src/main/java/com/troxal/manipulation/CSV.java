@@ -38,9 +38,10 @@ public class CSV {
             CSVWriter writer = new CSVWriter(new FileWriter(file));
 
             // Write header stuff
-            String[] headerTxt = {"Github ID","Repository Name","Github Link","Description","Primary Language",
-                    "Creation Date","Update Date","Push Date","Is Archived","Is Fork","Mentionable Users","Issue Users",
-                    "Committers","Total Size","Total Commits","Forks","Stars","Watchers","Languages","Branch Name"};
+            String[] headerTxt = {"Github ID","Repository Name","Owner","Github Link","Description","Primary Language",
+                    "Creation Date","Update Date","Push Date","Is Archived","Archived At","Is Fork","Is Empty",
+                    "Is Locked","Is Disabled","Is Template","Mentionable Users","Issue Users","Committers","Total Size",
+                    "Total Commits","Total Issues","Forks","Stars","Watchers","Languages","Branch Name"};
             writer.writeNext(headerTxt);
 
             // For all repos, import into a row
@@ -50,28 +51,36 @@ public class CSV {
                 for(int j=0;j<repos.get(i).getLanguages().size();j++)
                     sb.append(repos.get(i).getLanguages().get(j).toString());
 
+                RepoInfo repo = repos.get(i);
                 // Build row
                 String tempLine[] = new String[]{
-                        repos.get(i).getId(),
-                        repos.get(i).getName(),
-                        repos.get(i).getUrl(),
-                        repos.get(i).getDescription(),
-                        repos.get(i).getPrimaryLanguage(),
-                        repos.get(i).getCreationDate(),
-                        repos.get(i).getUpdateDate(),
-                        repos.get(i).getPushDate(),
-                        String.valueOf(repos.get(i).getIsArchived()),
-                        String.valueOf(repos.get(i).getIsFork()),
-                        String.valueOf(repos.get(i).getTotalMentionableUsers()),
-                        String.valueOf(repos.get(i).getTotalIssueUsers()),
-                        String.valueOf(repos.get(i).getTotalCommitterCount()),
-                        String.valueOf(repos.get(i).getTotalProjectSize()),
-                        String.valueOf(repos.get(i).getTotalCommits()),
-                        String.valueOf(repos.get(i).getForkCount()),
-                        String.valueOf(repos.get(i).getStarCount()),
-                        String.valueOf(repos.get(i).getWatchCount()),
+                        repo.getId(),
+                        repo.getName(),
+                        repo.getOwner(),
+                        repo.getUrl(),
+                        repo.getDescription(),
+                        repo.getPrimaryLanguage(),
+                        repo.getCreationDate(),
+                        repo.getUpdateDate(),
+                        repo.getPushDate(),
+                        String.valueOf(repo.getIsArchived()),
+                        repo.getArchivedAt(),
+                        String.valueOf(repo.getIsFork()),
+                        String.valueOf(repo.getIsEmpty()),
+                        String.valueOf(repo.getIsLocked()),
+                        String.valueOf(repo.getIsDisabled()),
+                        String.valueOf(repo.getIsTemplate()),
+                        String.valueOf(repo.getTotalIssueUsers()),
+                        String.valueOf(repo.getTotalMentionableUsers()),
+                        String.valueOf(repo.getTotalCommitterCount()),
+                        String.valueOf(repo.getTotalProjectSize()),
+                        String.valueOf(repo.getTotalCommits()),
+                        String.valueOf(repo.getIssueCount()),
+                        String.valueOf(repo.getForkCount()),
+                        String.valueOf(repo.getStarCount()),
+                        String.valueOf(repo.getWatchCount()),
                         sb.toString(),
-                        repos.get(i).getBranchName()
+                        repo.getBranchName()
                 };
 
                 // Write row to CSV
@@ -118,7 +127,7 @@ public class CSV {
             for (int i=0;i<csvData.size();i++) {
                 Boolean ignoreRepo = false;
                 // Languages are stored seperated by a space in CSV, so split
-                String[] languages = csvData.get(i)[18].split("' ");
+                String[] languages = csvData.get(i)[25].split("' ");
                 // tempLanguage to read into RepoInfo
                 List<LanguageInfo> tempLanguages = new ArrayList<>();
                 // Then the name and size are seperated by a colon
@@ -143,18 +152,25 @@ public class CSV {
                             csvData.get(i)[5],
                             csvData.get(i)[6],
                             csvData.get(i)[7],
-                            Boolean.parseBoolean(csvData.get(i)[8]),
+                            csvData.get(i)[8],
                             Boolean.parseBoolean(csvData.get(i)[9]),
-                            Integer.valueOf(csvData.get(i)[10]),
-                            Integer.valueOf(csvData.get(i)[11]),
-                            Integer.valueOf(csvData.get(i)[12]),
-                            Integer.valueOf(csvData.get(i)[13]),
-                            Integer.valueOf(csvData.get(i)[14]),
-                            Integer.valueOf(csvData.get(i)[15]),
+                            csvData.get(i)[10],
+                            Boolean.parseBoolean(csvData.get(i)[11]),
+                            Boolean.parseBoolean(csvData.get(i)[12]),
+                            Boolean.parseBoolean(csvData.get(i)[13]),
+                            Boolean.parseBoolean(csvData.get(i)[14]),
+                            Boolean.parseBoolean(csvData.get(i)[15]),
                             Integer.valueOf(csvData.get(i)[16]),
                             Integer.valueOf(csvData.get(i)[17]),
+                            Integer.valueOf(csvData.get(i)[18]),
+                            Integer.valueOf(csvData.get(i)[19]),
+                            Integer.valueOf(csvData.get(i)[20]),
+                            Integer.valueOf(csvData.get(i)[21]),
+                            Integer.valueOf(csvData.get(i)[22]),
+                            Integer.valueOf(csvData.get(i)[23]),
+                            Integer.valueOf(csvData.get(i)[24]),
                             tempLanguages,
-                            csvData.get(i)[19]
+                            csvData.get(i)[26]
                     );
 
                     // Add the repos to the repo list

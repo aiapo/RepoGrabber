@@ -12,13 +12,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class RefMiner {
-    public static void runJobs(RepoGrab repos){
+    private Database db = null;
+    public static void runJobs(RepoGrab repos, Database db){
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
 
         ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
         ExecutorService service = Executors.newWorkStealingPool();
-        Database db = new Manager().access();
+
 
         List<Future> commitRuns = new ArrayList<>();
         for(int j=0;j<repos.getRepos().size();j++){

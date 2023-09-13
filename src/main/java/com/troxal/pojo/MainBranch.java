@@ -13,8 +13,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 @Generated("jsonschema2pojo")
 public class MainBranch {
+
     @JsonProperty("name")
     private String name;
+    @JsonProperty("target")
+    private Target target;
 
     @JsonProperty("name")
     public String getName() {
@@ -25,9 +28,6 @@ public class MainBranch {
     public void setName(String name) {
         this.name = name;
     }
-
-    @JsonProperty("target")
-    private Target target;
 
     @JsonProperty("target")
     public Target getTarget() {

@@ -10,20 +10,25 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "id",
     "name",
+    "owner",
     "url",
     "description",
     "createdAt",
     "updatedAt",
     "pushedAt",
     "isArchived",
+    "archivedAt",
     "isPrivate",
     "isFork",
+    "isLocked",
     "isEmpty",
+    "isDisabled",
+    "isTemplate",
     "primaryLanguage",
+    "pullRequests",
     "forkCount",
     "stargazerCount",
     "watchers",
-    "projects",
     "issues",
     "issueUsers",
     "mentionableUsers",
@@ -37,6 +42,8 @@ public class Repo {
     private String id;
     @JsonProperty("name")
     private String name;
+    @JsonProperty("owner")
+    private Owner owner;
     @JsonProperty("url")
     private String url;
     @JsonProperty("description")
@@ -49,20 +56,32 @@ public class Repo {
     private String pushedAt;
     @JsonProperty("isArchived")
     private Boolean isArchived;
+    @JsonProperty("archivedAt")
+    private String archivedAt;
     @JsonProperty("isPrivate")
     private Boolean isPrivate;
     @JsonProperty("isFork")
     private Boolean isFork;
+    @JsonProperty("isLocked")
+    private Boolean isLocked;
     @JsonProperty("isEmpty")
     private Boolean isEmpty;
+    @JsonProperty("isDisabled")
+    private Boolean isDisabled;
+    @JsonProperty("isTemplate")
+    private Boolean isTemplate;
     @JsonProperty("primaryLanguage")
     private PrimaryLanguage primaryLanguage;
+    @JsonProperty("pullRequests")
+    private PullRequests pullRequests;
     @JsonProperty("forkCount")
     private Integer forkCount;
     @JsonProperty("stargazerCount")
     private Integer stargazerCount;
     @JsonProperty("watchers")
     private Watchers watchers;
+    @JsonProperty("issues")
+    private Issues issues;
     @JsonProperty("issueUsers")
     private IssueUsers issueUsers;
     @JsonProperty("mentionableUsers")
@@ -90,6 +109,16 @@ public class Repo {
     @JsonProperty("name")
     public void setName(String name) {
         this.name = name;
+    }
+
+    @JsonProperty("owner")
+    public Owner getOwner() {
+        return owner;
+    }
+
+    @JsonProperty("owner")
+    public void setOwner(Owner owner) {
+        this.owner = owner;
     }
 
     @JsonProperty("url")
@@ -152,6 +181,16 @@ public class Repo {
         this.isArchived = isArchived;
     }
 
+    @JsonProperty("archivedAt")
+    public String getArchivedAt() {
+        return archivedAt;
+    }
+
+    @JsonProperty("archivedAt")
+    public void setArchivedAt(String archivedAt) {
+        this.archivedAt = archivedAt;
+    }
+
     @JsonProperty("isPrivate")
     public Boolean getIsPrivate() {
         return isPrivate;
@@ -172,6 +211,16 @@ public class Repo {
         this.isFork = isFork;
     }
 
+    @JsonProperty("isLocked")
+    public Boolean getIsLocked() {
+        return isLocked;
+    }
+
+    @JsonProperty("isLocked")
+    public void setIsLocked(Boolean isLocked) {
+        this.isLocked = isLocked;
+    }
+
     @JsonProperty("isEmpty")
     public Boolean getIsEmpty() {
         return isEmpty;
@@ -182,6 +231,26 @@ public class Repo {
         this.isEmpty = isEmpty;
     }
 
+    @JsonProperty("isDisabled")
+    public Boolean getIsDisabled() {
+        return isDisabled;
+    }
+
+    @JsonProperty("isDisabled")
+    public void setIsDisabled(Boolean isDisabled) {
+        this.isDisabled = isDisabled;
+    }
+
+    @JsonProperty("isTemplate")
+    public Boolean getIsTemplate() {
+        return isTemplate;
+    }
+
+    @JsonProperty("isTemplate")
+    public void setIsTemplate(Boolean isTemplate) {
+        this.isTemplate = isTemplate;
+    }
+
     @JsonProperty("primaryLanguage")
     public PrimaryLanguage getPrimaryLanguage() {
         return primaryLanguage;
@@ -190,6 +259,16 @@ public class Repo {
     @JsonProperty("primaryLanguage")
     public void setPrimaryLanguage(PrimaryLanguage primaryLanguage) {
         this.primaryLanguage = primaryLanguage;
+    }
+
+    @JsonProperty("pullRequests")
+    public PullRequests getPullRequests() {
+        return pullRequests;
+    }
+
+    @JsonProperty("pullRequests")
+    public void setPullRequests(PullRequests pullRequests) {
+        this.pullRequests = pullRequests;
     }
 
     @JsonProperty("forkCount")
@@ -220,6 +299,16 @@ public class Repo {
     @JsonProperty("watchers")
     public void setWatchers(Watchers watchers) {
         this.watchers = watchers;
+    }
+
+    @JsonProperty("issues")
+    public Issues getIssues() {
+        return issues;
+    }
+
+    @JsonProperty("issues")
+    public void setIssues(Issues issues) {
+        this.issues = issues;
     }
 
     @JsonProperty("issueUsers")
