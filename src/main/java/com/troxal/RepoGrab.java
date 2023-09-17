@@ -3,6 +3,8 @@ package com.troxal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.troxal.database.Database;
+import com.troxal.database.Manager;
 import com.troxal.request.GitHub;
 import com.troxal.request.Requests;
 import com.troxal.pojo.*;
@@ -19,7 +22,7 @@ import com.troxal.manipulation.CSV;
 
 public class RepoGrab {
     // Initialize variables
-    static private String authToken = Config.getAuthToken();
+    private final String authToken = Config.get("AUTH_TOKEN");
     private String language;
     private Integer followers,users,percentLanguage,totalCommit,minTotalSize,maxTotalSize,ignoredRepos=0,addedRepos = 0;
     private Integer addedTime=20;
@@ -27,11 +30,11 @@ public class RepoGrab {
     private Boolean ranAtLeastOnce=false;
     private LocalDate beginningDate = LocalDate.parse("2010-01-01"), endingDate = LocalDate.parse("2010-01-15"),currentDate=LocalDate.now();
     private Set<RepoInfo> repoCollection = new HashSet<>();
-    private Database db = null;
+    private Database db;
 
     // Constructor to get query info, basically just sets all the variable data to their respective global variables
     public RepoGrab(Integer followers, String language, Integer users, Integer percentLanguage, Integer totalCommit,
-                    Integer minTotalSize, Integer maxTotalSize, String sDate, String endDate, Database db) {
+                    Integer minTotalSize, Integer maxTotalSize, String sDate, String endDate) {
         this.followers=followers;
         this.language=language;
         this.users=users;
@@ -42,14 +45,14 @@ public class RepoGrab {
         this.beginningDate = LocalDate.parse(sDate);
         this.endingDate = LocalDate.parse(endDate);
         this.addedTime= Math.toIntExact(ChronoUnit.DAYS.between(beginningDate, endingDate));
-        this.db=db;
+        this.db = new Manager().access();
 
         getRepos(null);
     }
 
     // Import CSV constructor
-    public RepoGrab(Boolean headless, Database db){
-        this.db=db;
+    public RepoGrab(Boolean headless){
+        this.db = new Manager().access();
         repoCollection = new HashSet<>(CSV.read(headless));
     }
 
@@ -352,6 +355,7 @@ public class RepoGrab {
                 tempRepo.getMainBranch().getName()
         );
         repoCollection.add(Repo);
+        addToDB(Repo);
         return true;
     }
 
@@ -362,4 +366,58 @@ public class RepoGrab {
         return addedRepos;
     }
 
+    public void addToDB(RepoInfo repo){
+        Object[] newRepo = {
+                repo.getId(),
+                repo.getName(),
+                repo.getOwner(),
+                repo.getUrl(),
+                repo.getDescription(),
+                repo.getPrimaryLanguage(),
+                repo.getCreationDate(),
+                repo.getUpdateDate(),
+                repo.getPushDate(),
+                repo.getIsArchived(),
+                repo.getArchivedAt(),
+                repo.getIsFork(),
+                repo.getIsEmpty(),
+                repo.getIsLocked(),
+                repo.getIsDisabled(),
+                repo.getIsTemplate(),
+                repo.getTotalIssueUsers(),
+                repo.getTotalMentionableUsers(),
+                repo.getTotalCommitterCount(),
+                repo.getTotalProjectSize(),
+                repo.getTotalCommits(),
+                repo.getIssueCount(),
+                repo.getForkCount(),
+                repo.getStarCount(),
+                repo.getWatchCount(),
+                repo.getBranchName()
+        };
+        try{
+            if(db.select("Repositories",new String[]{"id"},"id = ?",new Object[]{repo.getId()}).wasNull()){
+                if(db.insert("Repositories",newRepo))
+                    System.out.println("[INFO] Added repo: "+repo.getName());
+                else
+                    System.out.println("[ERROR] Failed to add repo: "+repo.getName());
+
+                for(int j=0;j<repo.getLanguages().size();j++){
+                    Object[] newLanguage = {
+                            repo.getId(),
+                            repo.getLanguages().get(j).getName(),
+                            repo.getLanguages().get(j).getSize()
+                    };
+                    if(db.insert("Languages",new Object[]{"repoid","name","size"},newLanguage))
+                        System.out.println("[INFO] Added "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
+                    else
+                        System.out.println("[ERROR] Failed to add "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
+                }
+            }else{
+                System.out.println("[INFO] Repo "+repo.getName()+" already in DB.. skipping!");
+            }
+        }catch (SQLException e) {
+            System.out.println("[ERROR] "+e);
+        }
+    }
 }

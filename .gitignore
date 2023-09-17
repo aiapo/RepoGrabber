@@ -43,8 +43,5 @@ build/
 ### RefMiner/CSV Results ###
 /results/*
 
-### Auth Keys ###
-config/github-oauth.properties
-
 ### .env ###
 config/.env

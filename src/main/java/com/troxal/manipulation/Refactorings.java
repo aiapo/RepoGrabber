@@ -1,5 +1,7 @@
 package com.troxal.manipulation;
 
+import com.troxal.database.Database;
+import com.troxal.database.Manager;
 import gr.uom.java.xmi.UMLModel;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
@@ -17,16 +19,19 @@ import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.createMode
 
 public class Refactorings implements Callable {
     private final GitService gitService;
+    private String id,gitURI;
     private Repository repository;
     private final RefactoringHandler handler;
     private RevCommit currentCommit;
 
-    public Refactorings(GitService gitService, Repository repository, RefactoringHandler handler,
-                        RevCommit currentCommit){
+    public Refactorings(String id, String gitURI, GitService gitService, Repository repository,
+                        RefactoringHandler handler, RevCommit currentCommit){
         this.gitService = gitService;
         this.repository = repository;
         this.handler = handler;
         this.currentCommit = currentCommit;
+        this.id=id;
+        this.gitURI=gitURI;
     }
 
     @Override
@@ -60,7 +65,25 @@ public class Refactorings implements Callable {
                 //logger.info(String.format("Ignored revision %s with no changes in java files", commitId));
                 refactoringsAtRevision = Collections.emptyList();
             }
-            handler.handle(commitId, refactoringsAtRevision);
+
+            Database db=new Manager().access();
+            Object[] newCommit = {commitId,gitURI,id};
+            if(db.insert("Commits",newCommit))
+                System.out.println("[INFO] Added commit: "+commitId);
+            else
+                System.out.println("[ERROR] Failed to add commit: "+commitId);
+            db.close();
+
+            for(Refactoring refactoring : refactoringsAtRevision) {
+                db=new Manager().access();
+                System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
+                Object[] newRefactoring = {commitId,refactoring.getName(),refactoring.toJSON()};
+                if(db.insert("Refactorings",newRefactoring))
+                    System.out.println("[INFO] Added refactoring: "+refactoring.getName());
+                else
+                    System.out.println("[ERROR] Failed to add refactoring: "+refactoring.getName());
+                db.close();
+            }
 
             // garbage collection
             refactoringsAtRevision.clear();

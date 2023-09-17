@@ -49,7 +49,7 @@ public class QueryBuilder {
         }
 
         query.deleteCharAt(query.lastIndexOf(","));
-        query.append(");");
+        query.append(")");
 
         return this;
     }

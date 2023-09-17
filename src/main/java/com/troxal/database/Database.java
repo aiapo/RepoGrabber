@@ -1,8 +1,7 @@
 package com.troxal.database;
 
-import java.io.File;
 import java.sql.*;
-public class Database {
+public class Database implements AutoCloseable{
 
     // Create a database connection
     protected Connection connection;
@@ -10,13 +9,17 @@ public class Database {
     // Import the Query class (this class will format the queries)
     protected QueryBuilder query;
 
-    protected String databaseFile;
-
     // Constructor to create connection to specified database
-    public Database(String databaseFile){
-        this.databaseFile = databaseFile;
+    public Database(String server,String user,String password){
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile);
+            connection = DriverManager.getConnection("jdbc:postgresql://"+server,user,password);
+        }catch (SQLException e){
+            System.out.println("[ERROR] "+e);
+        }
+    }
+    public void close(){
+        try{
+            connection.close();
         }catch (SQLException e){
             System.out.println("[ERROR] "+e);
         }
@@ -28,7 +31,6 @@ public class Database {
     // Then executes...
     // Special cases: CREATE and SELECT
     private int execute(String query, Object[] params){
-        checkLock();
         try {
             PreparedStatement ps = connection.prepareStatement(query);
             if (params != null) {
@@ -47,13 +49,16 @@ public class Database {
 
     // Creates a new table based on an object of attributes
     public Boolean create(String table, Object[] params){
-        query = new QueryBuilder();
-        query.create(table).attributes(params);
+        if(!tableExists(table)){
+            query = new QueryBuilder();
+            query.create(table).attributes(params);
 
-        if(execute(query.stringifyQuery(), null)==0)
+            if(execute(query.stringifyQuery(), null)==0)
+                return true;
+            else
+                return false;
+        }else
             return true;
-        else
-            return false;
     }
 
     // Inserts into a table an object of values
@@ -67,6 +72,16 @@ public class Database {
             return false;
     }
 
+    // Inserts into a table an object of values based on attributes
+    public Boolean insert(String table, Object[] attributes, Object[] params){
+        query = new QueryBuilder();
+        query.insert(table).attributes(attributes).values(params);
+
+        if(execute(query.stringifyQuery(), params)==1)
+            return true;
+        else
+            return false;
+    }
 
     // Updates tuple(s) in a table based on where condition
     public Boolean update(String table, String[] attribute, String condition, Object[] params){
@@ -86,7 +101,6 @@ public class Database {
 
     // Select tuple(s) based on condition (specify "MAX") in condition to select the max.
     public ResultSet select(String table, Object[] columns, String condition, Object[] params) throws SQLException {
-        checkLock();
         query = new QueryBuilder();
         if (condition.equals(""))
             query.select(columns).from(table);
@@ -118,13 +132,20 @@ public class Database {
             return false;
     }
 
-    public void checkLock(){
-        File s1 = new File(databaseFile+"-journal");
-        while(s1.exists()){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
+    private Boolean tableExists(String table) {
+        Boolean tExists = false;
+        try (ResultSet rs = connection.getMetaData().getTables(null,null,null,new String[] {"TABLE"})) {
+            while (rs.next()) {
+                String tName = rs.getString("TABLE_NAME");
+                if (tName != null && tName.equals(table.toLowerCase())) {
+                    tExists = true;
+                    break;
+                }
             }
+        } catch (SQLException e) {
+            System.out.println("[ERROR] " + e);
+            return false;
         }
+        return tExists;
     }
 }

@@ -5,26 +5,40 @@ import com.troxal.database.Database;
 import com.troxal.database.Manager;
 import com.troxal.manipulation.RefMine;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class RefMiner {
-    private Database db = null;
-    public static void runJobs(RepoGrab repos, Database db){
+    public static void runJobs(RepoGrab repos){
+        Database db=new Manager().access();
+
         final Integer maxProcessors = Runtime.getRuntime().availableProcessors();
         final Integer totalThreadPool = maxProcessors-1;
 
-        ExecutorService executor = Executors.newFixedThreadPool(totalThreadPool);
+        ExecutorService executor = Executors.newWorkStealingPool();
         ExecutorService service = Executors.newWorkStealingPool();
 
-
-        List<Future> commitRuns = new ArrayList<>();
         for(int j=0;j<repos.getRepos().size();j++){
-            executor.execute(new RefMine(repos.getRepo(j), false, db, service));
+            Boolean ignoreRepo = false;
+            try {
+                ResultSet rStatus = db.select("RepositoryStatus",new String[]{"status"},"id = ?",
+                        new Object[]{repos.getRepo(j).getId()});
+                if(rStatus.next()){
+                    if(rStatus.getInt("status")==1)
+                        ignoreRepo = true;
+                }
+            } catch (SQLException e) {
+                System.out.println("[ERROR] "+e);
+            }
+
+            if(!ignoreRepo) {
+                executor.execute(new RefMine(repos.getRepo(j), false, service));
+            }
         }
+
+        db.close();
 
         // Shut down threads
         executor.shutdown();

@@ -1,11 +1,9 @@
 package com.troxal.request;
 
-import kong.unirest.Headers;
 import org.jsoup.Connection;
 import org.jsoup.select.Elements;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static org.jsoup.Jsoup.parse;
@@ -39,7 +37,8 @@ public class GitHub {
             return data;
         // 401 = Unauthorized
         }else if(data.getStatus()==401){
-            System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key in 'github-oauth.properties'");
+            System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key" +
+                    " in 'config/.env'");
             return null;
         // 403 = Forbidden
         }else if(data.getStatus()==403){
