@@ -1,6 +1,8 @@
 package com.troxal.database;
 
 import java.sql.*;
+import java.util.List;
+
 public class Database implements AutoCloseable{
 
     // Create a database connection
@@ -70,6 +72,35 @@ public class Database implements AutoCloseable{
             return true;
         else
             return false;
+    }
+
+    // Inserts into a table an object of values
+    public int[] insert(String table, List<Object[]> params){
+        if(!params.isEmpty()){
+            query = new QueryBuilder();
+            query.insert(table).values(params.get(0));
+
+            try {
+                PreparedStatement ps = connection.prepareStatement(query.stringifyQuery());
+
+                for(Object[] p : params){
+                    if (p != null) {
+                        int index = 1;
+                        for (Object param : p) {
+                            ps.setObject(index, param);
+                            index++;
+                        }
+                        ps.addBatch();
+
+                    }
+                }
+
+                return ps.executeBatch();
+            } catch (SQLException e) {
+                System.out.println("[ERROR] "+e);
+            }
+        }
+        return null;
     }
 
     // Inserts into a table an object of values based on attributes

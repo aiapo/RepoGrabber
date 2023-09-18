@@ -53,14 +53,6 @@ public class RefMine implements Runnable, Serializable {
     private Boolean runRef(String gitURI, String id, String dir, String branchName){
         GitService gitService = new GitServiceImpl();
         try{
-            Object[] newRepoStatus = {id,0};
-            Database db=new Manager().access();
-            if(db.insert("RepositoryStatus",newRepoStatus))
-                System.out.println("[INFO] Added repo status: "+id);
-            else
-                System.out.println("[ERROR] Failed to add repo status: "+id);
-            db.close();
-
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
 
             // Run RefMiner
@@ -79,8 +71,8 @@ public class RefMine implements Runnable, Serializable {
                 System.out.println("[ERROR] "+e);
             }
 
-            Database dba=new Manager().access();
-            if(dba.update("RepositoryStatus",new String[]{"status"},"id = ?",new Object[]{1,id}))
+            Database db=new Manager().access();
+            if(db.insert("RepositoryStatus",new Object[]{1,id}))
                 System.out.println("[INFO] Updated repository status: "+id);
             else
                 System.out.println("[ERROR] Failed to update repository status: "+id);

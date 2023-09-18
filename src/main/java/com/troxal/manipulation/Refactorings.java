@@ -72,18 +72,21 @@ public class Refactorings implements Callable {
                 System.out.println("[INFO] Added commit: "+commitId);
             else
                 System.out.println("[ERROR] Failed to add commit: "+commitId);
-            db.close();
 
+            List<Object[]> rList = new ArrayList<>();
             for(Refactoring refactoring : refactoringsAtRevision) {
-                db=new Manager().access();
                 System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
-                Object[] newRefactoring = {commitId,refactoring.getName(),refactoring.toJSON()};
-                if(db.insert("Refactorings",newRefactoring))
-                    System.out.println("[INFO] Added refactoring: "+refactoring.getName());
-                else
-                    System.out.println("[ERROR] Failed to add refactoring: "+refactoring.getName());
-                db.close();
+                rList.add(new Object[]{commitId,refactoring.getName(),refactoring.toJSON()});
             }
+
+            db.insert("Refactorings",rList);
+
+            if(db.insert("CommitStatus",new Object[]{commitId,1}))
+                System.out.println("[INFO] Added commit status: "+id);
+            else
+                System.out.println("[ERROR] Failed to add commit status: "+id);
+
+            db.close();
 
             // garbage collection
             refactoringsAtRevision.clear();
