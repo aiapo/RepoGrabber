@@ -72,7 +72,7 @@ public class RefMine implements Runnable, Serializable {
             }
 
             Database db=new Manager().access();
-            if(db.insert("RepositoryStatus",new Object[]{1,id}))
+            if(db.insert("RepositoryStatus",new Object[]{id,1}))
                 System.out.println("[INFO] Updated repository status: "+id);
             else
                 System.out.println("[ERROR] Failed to update repository status: "+id);
