@@ -51,6 +51,14 @@ public class RefMine implements Runnable, Serializable {
     }
 
     private Boolean runRef(String gitURI, String id, String dir, String branchName){
+
+        Database db=new Manager().access();
+        if(db.insert("RepositoryStatus",new Object[]{id,2}))
+            System.out.println("[INFO] Updated repository status to in-progress: "+id);
+        else
+            System.out.println("[ERROR] Failed to update repository status to in-progress: "+id);
+        db.close();
+
         GitService gitService = new GitServiceImpl();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,gitURI);
@@ -71,11 +79,11 @@ public class RefMine implements Runnable, Serializable {
                 System.out.println("[ERROR] "+e);
             }
 
-            Database db=new Manager().access();
-            if(db.insert("RepositoryStatus",new Object[]{id,1}))
-                System.out.println("[INFO] Updated repository status: "+id);
+            db=new Manager().access();
+            if(db.update("RepositoryStatus", new String[]{"status"},"id = ?",new Object[]{1,id}))
+                System.out.println("[INFO] Updated repository status to completed: "+id);
             else
-                System.out.println("[ERROR] Failed to update repository status: "+id);
+                System.out.println("[ERROR] Failed to update repository status to completed: "+id);
             db.close();
 
             return true;
@@ -94,28 +102,35 @@ public class RefMine implements Runnable, Serializable {
         while (i.hasNext()) {
             totalCommits++;
             RevCommit currentCommit = i.next();
-            Boolean ignoreCommit = false;
+            Integer commitStatus = 0;
             try {
                 Database db=new Manager().access();
                 ResultSet cStatus = db.select("CommitStatus",new String[]{"status"},"id = ?",
                         new Object[]{currentCommit.getId().getName()});
                 if(cStatus.next()){
-                    if(cStatus.getInt("status")==1)
-                        ignoreCommit = true;
+                    commitStatus = cStatus.getInt("status");
+                    if(commitStatus==1){
+                        System.out.println("[INFO] Ignoring commit: " + currentCommit.getId().getName() +
+                                " because it's already been processed.");
+                    }else{
+                        System.out.print("[DEBUG] Unknown status encountered for commit!");
+                    }
+                }else{
+                    try {
+                        commitRuns.add(service.submit(new Refactorings(id, gitURI, gitService, repository, handler,
+                                currentCommit)));
+                    } catch (Exception e) {
+                        System.out.println(String.format("[ERROR] Ignored revision %s due to error %s", currentCommit.getId().getName(),e));
+                        handler.handleException(currentCommit.getId().getName(),e);
+                    }
                 }
                 db.close();
             } catch (SQLException e) {
                 System.out.println("[ERROR] "+e);
             }
 
-            if(!ignoreCommit){
-                try {
-                    commitRuns.add(service.submit(new Refactorings(id, gitURI, gitService, repository, handler,
-                            currentCommit)));
-                } catch (Exception e) {
-                    System.out.println(String.format("[ERROR] Ignored revision %s due to error %s", currentCommit.getId().getName(),e));
-                    handler.handleException(currentCommit.getId().getName(),e);
-                }
+            if(commitStatus!=1){
+
             }
         }
 
