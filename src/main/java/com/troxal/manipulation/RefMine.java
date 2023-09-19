@@ -124,6 +124,7 @@ public class RefMine implements Runnable, Serializable {
                         handler.handleException(currentCommit.getId().getName(),e);
                     }
                 }
+                cStatus.close();
                 db.close();
             } catch (SQLException e) {
                 System.out.println("[ERROR] "+e);

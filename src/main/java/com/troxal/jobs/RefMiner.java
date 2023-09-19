@@ -61,6 +61,7 @@ public class RefMiner {
             }else{
                 executor.execute(new RefMine(repos.getRepo(j), false, service));
             }
+            rStatus.close();
         } catch (SQLException e) {
             System.out.println("[ERROR] "+e);
         }
