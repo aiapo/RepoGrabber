@@ -63,7 +63,7 @@ public class RefMiner {
             }
             rStatus.close();
         } catch (SQLException e) {
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] SQL Exception: "+e+" (runJob [RefMiner.java])");
         }
     }
 }

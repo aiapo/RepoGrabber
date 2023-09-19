@@ -91,7 +91,7 @@ public class RepoGrab {
             // Wait 1 seconds to comply with API limits
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
-            System.out.println("[ERROR] Error trying to wait: \n"+e);
+            System.out.println("[ERROR] Error trying to wait: \n"+e+" (RepoGrab.java)");
         }
         // Just get total repos in this chunk
         String query = "query listRepos($queryString: String!, $amountReturned: Int!, $cursorValue: String) { " +

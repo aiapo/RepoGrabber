@@ -45,7 +45,7 @@ public class RefMine implements Runnable, Serializable {
         if(runRef(repo.getUrl()+".git",repo.getId(),dir,branchName)){
             System.out.println("[INFO] ** RefMiner success on "+dir);
         }else
-            System.out.println("[ERROR] ** RefMiner failed on "+dir);
+            System.out.println("[ERROR] ** RefMiner failed on "+dir+" (run [RefMine.java])");
 
         Runtime.getRuntime().gc();
     }
@@ -56,7 +56,8 @@ public class RefMine implements Runnable, Serializable {
         if(db.insert("RepositoryStatus",new Object[]{id,2}))
             System.out.println("[INFO] Updated repository status to in-progress: "+id);
         else
-            System.out.println("[ERROR] Failed to update repository status to in-progress: "+id);
+            System.out.println("[ERROR] Failed to update repository status to in-progress: "+id+" (runRef [RefMine" +
+                    ".java])");
         db.close();
 
         GitService gitService = new GitServiceImpl();
@@ -67,7 +68,7 @@ public class RefMine implements Runnable, Serializable {
             detectAll(id, gitURI, repo, branchName, new RefactoringHandler() {
                 @Override
                 public void handleException(String commit, Exception e) {
-                    System.out.println("[ERROR] Error processing commit " + commit);
+                    System.out.println("[ERROR] Error processing commit " + commit+" (runRef [RefMine.java])");
                 }
             });
 
@@ -83,12 +84,13 @@ public class RefMine implements Runnable, Serializable {
             if(db.update("RepositoryStatus", new String[]{"status"},"id = ?",new Object[]{1,id}))
                 System.out.println("[INFO] Updated repository status to completed: "+id);
             else
-                System.out.println("[ERROR] Failed to update repository status to completed: "+id);
+                System.out.println("[ERROR] Failed to update repository status to completed: "+id+" (runRef [RefMine" +
+                        ".java])");
             db.close();
 
             return true;
         }catch (Exception e){
-            System.out.println("[ERROR] Exception: "+e);
+            System.out.println("[ERROR] Exception: "+e+" (runRef [RefMine.java])");
             return false;
         }
     }
@@ -113,7 +115,7 @@ public class RefMine implements Runnable, Serializable {
                         //System.out.println("[INFO] Ignoring commit: " + currentCommit.getId().getName() +
                         //        " because it's already been processed.");
                     }else{
-                        System.out.print("[DEBUG] Unknown status encountered for commit!");
+                        System.out.print("[DEBUG] Unknown status encountered for commit!"+" (detect [RefMine.java])");
                     }
                 }else{
                     try {
@@ -127,7 +129,7 @@ public class RefMine implements Runnable, Serializable {
                 cStatus.close();
                 db.close();
             } catch (SQLException e) {
-                System.out.println("[ERROR] "+e);
+                System.out.println("[ERROR] SQL Exception: "+e+" (detect [RefMine.java])");
             }
         }
 
@@ -135,10 +137,10 @@ public class RefMine implements Runnable, Serializable {
             try {
                 Boolean commit = fut.get();
                 if (!commit){
-                    System.out.println("[ERROR] Error with thread!");
+                    System.out.println("[ERROR] Error with thread, no return!"+" (detect [RefMine.java])");
                 }
             }catch (Exception e) {
-                System.out.println("[ERROR] " + e);
+                System.out.println("[ERROR] Thread Future: " + e+" (detect [RefMine.java])");
             }
         }
         System.out.println("\nFinished all sub-threads for repo "+projectName);

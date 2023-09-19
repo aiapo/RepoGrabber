@@ -16,14 +16,14 @@ public class Database implements AutoCloseable{
         try {
             connection = DriverManager.getConnection("jdbc:postgresql://"+server,user,password);
         }catch (SQLException e){
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] SQL Exception: "+e+" (Database [Database.java])");
         }
     }
     public void close(){
         try{
             connection.close();
         }catch (SQLException e){
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] SQL Exception: "+e+" (close [Database.java])");
         }
     }
 
@@ -44,7 +44,7 @@ public class Database implements AutoCloseable{
             }
             return ps.executeUpdate();
         }catch (SQLException e){
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] SQL Exception: "+e+" (execute [Database.java])");
             return 1;
         }
     }
@@ -97,7 +97,7 @@ public class Database implements AutoCloseable{
 
                 return ps.executeBatch();
             } catch (SQLException e) {
-                System.out.println("[ERROR] "+e);
+                System.out.println("[ERROR] SQL Exception: "+e+" (insert [Database.java])");
             }
         }
         return null;
@@ -174,7 +174,7 @@ public class Database implements AutoCloseable{
                 }
             }
         } catch (SQLException e) {
-            System.out.println("[ERROR] " + e);
+            System.out.println("[ERROR] SQL Exception : " + e+" (tableExists [Database.java])");
             return false;
         }
         return tExists;

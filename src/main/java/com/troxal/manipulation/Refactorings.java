@@ -71,7 +71,7 @@ public class Refactorings implements Callable {
             if(db.insert("Commits",newCommit))
                 System.out.println("[INFO] Added commit: "+commitId);
             else
-                System.out.println("[ERROR] Failed to add commit: "+commitId);
+                System.out.println("[ERROR] Failed to add commit: "+commitId+" (Refactorings.java)");
 
             List<Object[]> rList = new ArrayList<>();
             for(Refactoring refactoring : refactoringsAtRevision) {
@@ -84,7 +84,7 @@ public class Refactorings implements Callable {
             if(db.insert("CommitStatus",new Object[]{commitId,1}))
                 System.out.println("[INFO] Added commit status: "+id);
             else
-                System.out.println("[ERROR] Failed to add commit status: "+id);
+                System.out.println("[ERROR] Failed to add commit status: "+id+" (Refactorings.java)");
 
             db.close();
 
@@ -100,7 +100,7 @@ public class Refactorings implements Callable {
 
             return true;
         } catch (Exception e) {
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] "+e+" (call [Refactorings.java])");
             return false;
         }
     }
