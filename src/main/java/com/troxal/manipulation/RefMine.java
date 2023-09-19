@@ -110,8 +110,8 @@ public class RefMine implements Runnable, Serializable {
                 if(cStatus.next()){
                     commitStatus = cStatus.getInt("status");
                     if(commitStatus==1){
-                        System.out.println("[INFO] Ignoring commit: " + currentCommit.getId().getName() +
-                                " because it's already been processed.");
+                        //System.out.println("[INFO] Ignoring commit: " + currentCommit.getId().getName() +
+                        //        " because it's already been processed.");
                     }else{
                         System.out.print("[DEBUG] Unknown status encountered for commit!");
                     }
