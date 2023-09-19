@@ -128,10 +128,6 @@ public class RefMine implements Runnable, Serializable {
             } catch (SQLException e) {
                 System.out.println("[ERROR] "+e);
             }
-
-            if(commitStatus!=1){
-
-            }
         }
 
         for(Future<Boolean> fut : commitRuns){
