@@ -1,11 +1,9 @@
 package com.troxal;
 
-import com.troxal.database.Database;
 import com.troxal.database.Manager;
 import com.troxal.jobs.RefMiner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
-import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,37 +14,44 @@ import static java.lang.System.exit;
 
 public class Main {
     public static void main(String[] args) {
-        Database db = new Manager().access();
+        new Manager(true).close();
+
         boolean newQuery = true;
         while (newQuery) {
             Integer menuChoice = 0;
             Boolean headless=false;
-            RepoGrab rg = null;
+            RepoGrab rg;
             String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
                     errorInt = "Please enter a number.", errorString = "Please enter a valid String", errorYN =
                     "Please enter 'y' or 'n'";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, minTotalSize = 0, maxTotalSize =
-                    0, commitUsers = 0, i = 0;
+                    0, i = 0;
 
                 System.out.println("-- Welcome to RepoGrabber! --\n");
 
-                if (args.length > 0 && args[0].equals("headless")) {
-                    Dotenv dotenv = Dotenv.configure()
-                            .directory("/config")
-                            .filename(".env")
-                            .load();
+                // TODO: Run select
+                // DB: Select all runs in DB
+                // if(runs available)
+                // -- OUT: List all runs
+                // -- OUT: "Which run do you want to use? Or do you want to start from scratch?"
+                // -- if(scratch)
+                // -- -- Start new repo grab
+                // -- else
+                // -- -- Import run's repos into local repograb
+                // -- -- Go to main menu
 
-                    importCSV = dotenv.get("IMPORT_CSV");
-                    languages = dotenv.get("LANGUAGE_WANTED");
-                    sDate = dotenv.get("START_CREATEDATE");
-                    endDate = dotenv.get("END_CREATEDATE");
-                    followers = Integer.valueOf(dotenv.get("PROJECT_FOLLOWERS"));
-                    users = Integer.valueOf(dotenv.get("PROJECT_COMMITTERS"));
-                    percentLanguage = Integer.valueOf(dotenv.get("PROJECT_PERCENT"));
-                    totalCommit = Integer.valueOf(dotenv.get("PROJECT_TOTALCOMMIT"));
-                    minTotalSize = Integer.valueOf(dotenv.get("PROJECT_MINTOTALSIZE"));
-                    maxTotalSize = Integer.valueOf(dotenv.get("PROJECT_MAXTOTALSIZE"));
-                    menuOrder = dotenv.get("MENU_ORDER");
+                if (args.length > 0 && args[0].equals("headless")) {
+                    importCSV = Config.get("IMPORT_CSV");
+                    languages = Config.get("LANGUAGE_WANTED");
+                    sDate = Config.get("START_CREATEDATE");
+                    endDate = Config.get("END_CREATEDATE");
+                    followers = Integer.valueOf(Config.get("PROJECT_FOLLOWERS"));
+                    users = Integer.valueOf(Config.get("PROJECT_COMMITTERS"));
+                    percentLanguage = Integer.valueOf(Config.get("PROJECT_PERCENT"));
+                    totalCommit = Integer.valueOf(Config.get("PROJECT_TOTALCOMMIT"));
+                    minTotalSize = Integer.valueOf(Config.get("PROJECT_MINTOTALSIZE"));
+                    maxTotalSize = Integer.valueOf(Config.get("PROJECT_MAXTOTALSIZE"));
+                    menuOrder = Config.get("MENU_ORDER");
                     headless = true;
                 } else {
                    Scanner scn = new Scanner(System.in);
@@ -88,9 +93,9 @@ public class Main {
                 System.out.println("\n** Grabbing repos!");
                 if (importCSV.toLowerCase().equals("n")) {
                     rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, minTotalSize,
-                            maxTotalSize, sDate, endDate,db);
+                            maxTotalSize, sDate, endDate);
                 } else {
-                    rg = new RepoGrab(headless,db);
+                    rg = new RepoGrab(headless);
                 }
                 System.out.println("\n** Grabbed repos!");
 
@@ -127,11 +132,14 @@ public class Main {
                             metaData(followers,languages,users,percentLanguage,totalCommit,minTotalSize,sDate,rg,endDate);
                             break;
                         case 4:
-                            RefMiner.runJobs(rg,db);
+                            RefMiner.runJobs(rg);
                         case 5:
                             break;
                         case 6:
                             newQuery = false;
+                            break;
+                        default:
+                            System.out.println("Invalid choice!");
                             break;
                     }
                 }

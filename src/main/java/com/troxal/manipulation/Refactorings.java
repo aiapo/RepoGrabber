@@ -1,5 +1,7 @@
 package com.troxal.manipulation;
 
+import com.troxal.database.Database;
+import com.troxal.database.Manager;
 import gr.uom.java.xmi.UMLModel;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
@@ -17,16 +19,19 @@ import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.createMode
 
 public class Refactorings implements Callable {
     private final GitService gitService;
+    private String id,gitURI;
     private Repository repository;
     private final RefactoringHandler handler;
     private RevCommit currentCommit;
 
-    public Refactorings(GitService gitService, Repository repository, RefactoringHandler handler,
-                        RevCommit currentCommit){
+    public Refactorings(String id, String gitURI, GitService gitService, Repository repository,
+                        RefactoringHandler handler, RevCommit currentCommit){
         this.gitService = gitService;
         this.repository = repository;
         this.handler = handler;
         this.currentCommit = currentCommit;
+        this.id=id;
+        this.gitURI=gitURI;
     }
 
     @Override
@@ -60,7 +65,28 @@ public class Refactorings implements Callable {
                 //logger.info(String.format("Ignored revision %s with no changes in java files", commitId));
                 refactoringsAtRevision = Collections.emptyList();
             }
-            handler.handle(commitId, refactoringsAtRevision);
+
+            Database db=new Manager().access();
+            Object[] newCommit = {commitId,gitURI,id};
+            if(db.insert("Commits",newCommit))
+                System.out.println("[INFO] Added commit: "+commitId);
+            else
+                System.out.println("[ERROR] Failed to add commit: "+commitId+" (Refactorings.java)");
+
+            List<Object[]> rList = new ArrayList<>();
+            for(Refactoring refactoring : refactoringsAtRevision) {
+                System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
+                rList.add(new Object[]{commitId,refactoring.getName(),refactoring.toJSON()});
+            }
+
+            db.insert("Refactorings",rList);
+
+            if(db.insert("CommitStatus",new Object[]{commitId,1}))
+                System.out.println("[INFO] Added commit status: "+id);
+            else
+                System.out.println("[ERROR] Failed to add commit status: "+id+" (Refactorings.java)");
+
+            db.close();
 
             // garbage collection
             refactoringsAtRevision.clear();
@@ -74,7 +100,7 @@ public class Refactorings implements Callable {
 
             return true;
         } catch (Exception e) {
-            System.out.println("[ERROR] "+e);
+            System.out.println("[ERROR] "+e+" (call [Refactorings.java])");
             return false;
         }
     }
