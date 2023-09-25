@@ -354,6 +354,11 @@ public class RepoGrab {
                 languageList,
                 tempRepo.getMainBranch().getName()
         );
+
+        // If repo already added, don't add it again
+        if(checkExists(Repo))
+            return false;
+
         repoCollection.add(Repo);
         addToDB(Repo);
         return true;
@@ -364,6 +369,13 @@ public class RepoGrab {
     }
     public int getAddedRepos(){
         return addedRepos;
+    }
+
+    private Boolean checkExists(RepoInfo repo){
+        for(RepoInfo r : repoCollection)
+            if(r==repo)
+                return true;
+        return false;
     }
 
     public void addToDB(RepoInfo repo){
