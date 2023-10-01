@@ -3,6 +3,7 @@ package com.troxal.manipulation;
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
 import gr.uom.java.xmi.UMLModel;
+import gr.uom.java.xmi.diff.CodeRange;
 import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
 import gr.uom.java.xmi.diff.UMLModelDiff;
 import org.eclipse.jgit.lib.Repository;
@@ -11,6 +12,9 @@ import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringHandler;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -74,12 +78,29 @@ public class Refactorings implements Callable {
                 System.out.println("[ERROR] Failed to add commit: "+commitId+" (Refactorings.java)");
 
             List<Object[]> rList = new ArrayList<>();
+            List<Object[]> lsList = new ArrayList<>();
+            List<Object[]> rsList = new ArrayList<>();
             for(Refactoring refactoring : refactoringsAtRevision) {
                 System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
-                rList.add(new Object[]{commitId,refactoring.getName(),refactoring.toJSON()});
+                rList.add(new Object[]{commitId,refactoring.getName(),getMD5(refactoring.toJSON())});
+                for(CodeRange a : refactoring.leftSide()){
+                    lsList.add(new Object[]{commitId,getMD5(a.toString()),a.getEndLine(),
+                            a.getEndColumn(),
+                            a.getStartColumn(),a.getFilePath(),a.getStartLine(),a.getCodeElementType(),
+                            a.getDescription(),a.getCodeElement()});
+                }
+                for(CodeRange a : refactoring.rightSide()){
+                    rsList.add(new Object[]{commitId,getMD5(a.toString()),a.getEndLine(),a.getEndColumn(),
+                            a.getStartColumn(),a.getFilePath(),a.getStartLine(),a.getCodeElementType(),
+                            a.getDescription(),a.getCodeElement()});
+                }
             }
 
             db.insert("Refactorings",rList);
+
+            db.insert("Leftside_Refactorings",lsList);
+
+            db.insert("Rightside_Refactorings",rsList);
 
             if(db.insert("CommitStatus",new Object[]{commitId,1}))
                 System.out.println("[INFO] Added commit status: "+id);
@@ -102,6 +123,25 @@ public class Refactorings implements Callable {
         } catch (Exception e) {
             System.out.println("[ERROR] "+e+" (call [Refactorings.java])");
             return false;
+        }
+    }
+
+    public String getMD5(String input)
+    {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] messageDigest = md.digest(input.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
+        }
+
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 }

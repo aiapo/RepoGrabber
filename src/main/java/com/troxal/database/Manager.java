@@ -88,7 +88,36 @@ public class Manager{
                             "HASH  VARCHAR    NOT NULL",
                             "NAME   VARCHAR    NOT NULL",
                             "REFACTORING   TEXT    NOT NULL",
+                            "DESCRIPTION   TEXT",
                             "PRIMARY KEY (HASH, REFACTORING)"
+                    });
+            DB.create(
+                    "Leftside_Refactorings", new Object[]{
+                            "SIDEHASH    VARCHAR NOT NULL",
+                            "REFACTORINGHASH  VARCHAR    NOT NULL",
+                            "endLine   VARCHAR",
+                            "endColumn   VARCHAR",
+                            "startColumn    VARCHAR",
+                            "filePath    VARCHAR",
+                            "startLine  VARCHAR",
+                            "CodeElementType    VARCHAR ",
+                            "description    TEXT ",
+                            "codeElement    VARCHAR",
+                            "PRIMARY KEY (SIDEHASH, REFACTORINGHASH)"
+                    });
+            DB.create(
+                    "Rightside_Refactorings", new Object[]{
+                            "SIDEHASH    VARCHAR NOT NULL",
+                            "REFACTORINGHASH  VARCHAR    NOT NULL",
+                            "endLine   VARCHAR",
+                            "endColumn   VARCHAR",
+                            "startColumn    VARCHAR",
+                            "filePath    VARCHAR",
+                            "startLine  VARCHAR",
+                            "CodeElementType    VARCHAR ",
+                            "description    TEXT ",
+                            "codeElement    VARCHAR",
+                            "PRIMARY KEY (SIDEHASH, REFACTORINGHASH)"
                     });
     }
 
