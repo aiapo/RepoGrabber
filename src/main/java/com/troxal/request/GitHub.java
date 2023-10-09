@@ -35,11 +35,12 @@ public class GitHub {
         // 200 = OK
         if(data.getStatus()==200) {
             return data;
+
         // 401 = Unauthorized
         }else if(data.getStatus()==401){
             System.out.println("[ERROR] You provided an invalid or expired GitHub API Key. Make sure you put your key" +
                     " in 'config/.env'");
-            return null;
+
         // 403 = Forbidden
         }else if(data.getStatus()==403){
             Long ghTimeout;
@@ -51,27 +52,30 @@ public class GitHub {
                 ghTimeout = Long.valueOf(data.getHeader().getFirst("retry-after"));
                 System.out.println("[ERROR] A rate limit or unauthorized request encountered... waiting "+ghTimeout+" seconds...\n - Response:\n"+data.getBody());
             }
+
             try {
                 // Wait determined by 'retry-after' seconds to comply with API limits
                 TimeUnit.SECONDS.sleep(ghTimeout);
+                return apiHandler(data);
             } catch (InterruptedException e) {
                 System.out.println("[ERROR] Error trying to wait: \n"+e);
             }
-            return null;
-            // 502 = Bad Gateway (this seems to be when GraphQL timeouts)
+
+        // 502 = Bad Gateway (this seems to be when GraphQL timeouts)
         }else if(data.getStatus()==502){
             System.out.println("[ERROR] A bad response encountered... waiting "+15+" seconds...\n - Response:\n"+data.getBody());
             try {
                 // Wait 15 seconds to try again
                 TimeUnit.SECONDS.sleep(15);
+                return apiHandler(data);
             } catch (InterruptedException e) {
                 System.out.println("[ERROR] Error trying to wait: \n"+e);
             }
-            return null;
-            // Just error if any other status
-        } else{
+
+        // Just error if any other status
+        }else{
             System.out.println("[ERROR] Encountered an error from GitHub: \n - Status:"+data.getStatus()+"\n - Body: "+data.getBody());
-            return null;
         }
+        return null;
     }
 }
