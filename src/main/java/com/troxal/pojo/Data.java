@@ -9,7 +9,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "rateLimit",
-    "search"
+    "search",
+    "repo"
 })
 @Generated("jsonschema2pojo")
 public class Data {
@@ -18,6 +19,9 @@ public class Data {
     private RateLimit rateLimit;
     @JsonProperty("search")
     private Search search;
+
+    @JsonProperty("repo")
+    private Repo repo;
 
     @JsonProperty("rateLimit")
     public RateLimit getRateLimit() {
@@ -37,6 +41,16 @@ public class Data {
     @JsonProperty("search")
     public void setSearch(Search search) {
         this.search = search;
+    }
+
+    @JsonProperty("repo")
+    public Repo getRepo() {
+        return repo;
+    }
+
+    @JsonProperty("repo")
+    public void setRepo(Repo repo) {
+        this.repo = repo;
     }
 
 }

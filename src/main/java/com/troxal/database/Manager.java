@@ -119,6 +119,13 @@ public class Manager{
                             "codeElement    VARCHAR",
                             "PRIMARY KEY (SIDEHASH, REFACTORINGHASH)"
                     });
+        DB.create(
+                "CommitInfo", new Object[]{
+                        "commit    VARCHAR NOT NULL",
+                        "repo  VARCHAR    NOT NULL",
+                        "authoredDate   TIMESTAMP    NOT NULL",
+                        "PRIMARY KEY (commit, repo)"
+                });
     }
 
     public Database access(){

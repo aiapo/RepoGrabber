@@ -8,13 +8,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "name"
+    "name",
+    "id",
+    "authoredDate"
 })
 @Generated("jsonschema2pojo")
 public class Node {
 
     @JsonProperty("name")
     private String name;
+    @JsonProperty("id")
+    private String id;
+    @JsonProperty("authoredDate")
+    private String authoredDate;
+
 
     @JsonProperty("name")
     public String getName() {
@@ -24,6 +31,26 @@ public class Node {
     @JsonProperty("name")
     public void setName(String name) {
         this.name = name;
+    }
+
+    @JsonProperty("id")
+    public String getId() {
+        return id;
+    }
+
+    @JsonProperty("id")
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @JsonProperty("authoredDate")
+    public String getAuthoredDate() {
+        return authoredDate;
+    }
+
+    @JsonProperty("authoredDate")
+    public void setAuthoredDate(String authoredDate) {
+        this.authoredDate = authoredDate;
     }
 
 }

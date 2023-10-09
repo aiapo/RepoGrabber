@@ -1,8 +1,14 @@
 package com.troxal;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.troxal.database.Database;
+import com.troxal.database.Manager;
+import com.troxal.manipulation.CSV;
+import com.troxal.pojo.Data;
+import com.troxal.pojo.LanguageInfo;
+import com.troxal.pojo.Repo;
+import com.troxal.pojo.RepoInfo;
+import com.troxal.request.GitHub;
+import com.troxal.request.Mapper;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -12,14 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import com.troxal.database.Database;
-import com.troxal.database.Manager;
-import com.troxal.request.GitHub;
-import com.troxal.request.Mapper;
-import com.troxal.request.Requests;
-import com.troxal.pojo.*;
-import com.troxal.manipulation.CSV;
 
 public class RepoGrab {
     // Initialize variables
