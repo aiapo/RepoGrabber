@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
 import com.troxal.request.GitHub;
+import com.troxal.request.Mapper;
 import com.troxal.request.Requests;
 import com.troxal.pojo.*;
 import com.troxal.manipulation.CSV;
@@ -105,7 +106,7 @@ public class RepoGrab {
         System.out.println("[INFO] Optimizer trying period from "+beginningDate+" to "+endingDate);
 
         // Get the data
-        Data repoData = queryData(query,null);
+        Data repoData = Mapper.queryData(query,generateVariables(null),authToken);
 
         // If no error from API
         if(repoData!=null){
@@ -126,48 +127,6 @@ public class RepoGrab {
 
         }else
             System.out.println("error with repoData");
-    }
-
-    // Converts the JSON response to POJO
-    private Data jsonToRepo(String responseData){
-        // Create a ObjectMapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            // Return the JSON data from the POST query and map each JSON Object to their respective Java Object
-            GitHubJSON d = objectMapper.readValue(responseData, GitHubJSON.class);
-            if(d.getErrors()==null)
-                return d.getData();
-            else{
-                System.out.println("[ERROR] Encountered an error on from GitHub: \n - "+d.getErrors().get(0).getMessage());
-                return null;
-            }
-        } catch (JsonMappingException e) {
-            System.out.println("[ERROR] Encountered an error on when JSON mapping: \n"+e);
-            return null;
-        } catch (JsonProcessingException e) {
-            System.out.println("[ERROR] Encountered an error on when JSON processing: \n"+e);
-            return null;
-        }
-    }
-
-    // Gets the data from the API and error handles API stuff
-    private Data queryData(String query,String endCursor){
-        String queryVariables = generateVariables(endCursor);
-
-        // Actually make the query
-        Requests data = GitHub.GraphQL(authToken, query, queryVariables);
-
-        // If we have no error, map
-        if(data!=null) {
-            // Convert JSON response to Object
-            Data repos = jsonToRepo(data.getBody());
-            // If no error mapping, return the mapped repos
-            if (repos!=null)
-                return repos;
-            else
-                return null;
-        }
-        return null;
     }
 
     // Get all repos from API
@@ -223,7 +182,7 @@ public class RepoGrab {
         System.out.println("[DEBUG] Variables: "+generateVariables(endCursor));
 
         // Get the data
-        Data repoData = queryData(query,endCursor);
+        Data repoData = Mapper.queryData(query,generateVariables(endCursor),authToken);
 
         if(repoData!=null){
             if(((repoData.getSearch().getRepositoryCount()<700||repoData.getSearch().getRepositoryCount()>1000)&&endingDate.isBefore(currentDate))||!ranAtLeastOnce) {
