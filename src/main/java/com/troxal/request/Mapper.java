@@ -16,8 +16,14 @@ public class Mapper {
             GitHubJSON d = objectMapper.readValue(responseData, GitHubJSON.class);
             if(d.getErrors()==null)
                 return d.getData();
-            else
+            else{
+                // So GitHub API returns 200 on an error, that's bad API design but whatever
                 System.out.println("[ERROR] Encountered an error on from GitHub: \n - "+d.getErrors().get(0).getMessage());
+                Data tempData = new Data();
+                tempData.setErrorType(d.getErrors().get(0).getType());
+                return tempData;
+            }
+
         } catch (JsonMappingException e) {
             System.out.println("[ERROR] Encountered an error on when JSON mapping: \n"+e);
         } catch (JsonProcessingException e) {

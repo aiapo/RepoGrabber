@@ -73,59 +73,32 @@ public class Manager{
                         "PRIMARY KEY (REPOID,NAME)"
                 });
             DB.create(
-                "Commits", new Object[]{
-                        "HASH   VARCHAR PRIMARY KEY",
-                        "GIT    VARCHAR    NOT NULL",
-                        "REPOSITORYID    VARCHAR    NOT NULL"
-                });
-            DB.create(
                 "CommitStatus", new Object[]{
                         "ID  VARCHAR    PRIMARY KEY",
                         "STATUS   INTEGER    NOT NULL"
                 });
             DB.create(
                     "Refactorings", new Object[]{
-                            "HASH  VARCHAR    NOT NULL",
-                            "NAME   VARCHAR    NOT NULL",
-                            "REFACTORING   TEXT    NOT NULL",
-                            "DESCRIPTION   TEXT",
-                            "PRIMARY KEY (HASH, REFACTORING)"
-                    });
-            DB.create(
-                    "Leftside_Refactorings", new Object[]{
-                            "SIDEHASH    VARCHAR NOT NULL",
-                            "REFACTORINGHASH  VARCHAR    NOT NULL",
-                            "endLine   VARCHAR",
-                            "endColumn   VARCHAR",
-                            "startColumn    VARCHAR",
+                            "refactoringhash    VARCHAR NOT NULL",
+                            "commit    VARCHAR NOT NULL",
+                            "gituri  VARCHAR    NOT NULL",
+                            "repositoryid  VARCHAR    NOT NULL",
+                            "refactoringname   VARCHAR",
+                            "refactoringside   VARCHAR",
+                            "startLine    INTEGER",
+                            "endLine    INTEGER",
+                            "startColumn    INTEGER",
+                            "endColumn    INTEGER",
                             "filePath    VARCHAR",
-                            "startLine  VARCHAR",
                             "CodeElementType    VARCHAR ",
                             "description    TEXT ",
                             "codeElement    VARCHAR",
-                            "PRIMARY KEY (SIDEHASH, REFACTORINGHASH)"
+                            "commitauthor    VARCHAR",
+                            "commitmessage    VARCHAR",
+                            "commitdate    TIMESTAMP",
+                            "PRIMARY KEY (refactoringhash, commit, repositoryid)"
                     });
-            DB.create(
-                    "Rightside_Refactorings", new Object[]{
-                            "SIDEHASH    VARCHAR NOT NULL",
-                            "REFACTORINGHASH  VARCHAR    NOT NULL",
-                            "endLine   VARCHAR",
-                            "endColumn   VARCHAR",
-                            "startColumn    VARCHAR",
-                            "filePath    VARCHAR",
-                            "startLine  VARCHAR",
-                            "CodeElementType    VARCHAR ",
-                            "description    TEXT ",
-                            "codeElement    VARCHAR",
-                            "PRIMARY KEY (SIDEHASH, REFACTORINGHASH)"
-                    });
-        DB.create(
-                "CommitInfo", new Object[]{
-                        "commit    VARCHAR NOT NULL",
-                        "repo  VARCHAR    NOT NULL",
-                        "authoredDate   TIMESTAMP    NOT NULL",
-                        "PRIMARY KEY (commit, repo)"
-                });
+
     }
 
     public Database access(){

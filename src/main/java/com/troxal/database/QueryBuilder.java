@@ -24,7 +24,7 @@ public class QueryBuilder {
         }
         //removes the last comma
         query.deleteCharAt(query.lastIndexOf(","));
-        query.append(");");
+        query.append(")");
         return this;
     }
 
@@ -140,8 +140,22 @@ public class QueryBuilder {
         return this;
     }
 
+    public QueryBuilder onConflict(Object[] columns){
+        if(columns != null){
+            query.append(" ON CONFLICT (");
+            for(Object column : columns){
+                query.append(column);
+                query.append(",");
+            }
+            query.deleteCharAt(query.lastIndexOf(","));
+            query.append(") DO NOTHING");
+        }
+        return this;
+    }
+
     // Stringify query
     public String stringifyQuery(){
+        query.append(";");
         return query.toString();
     }
 }

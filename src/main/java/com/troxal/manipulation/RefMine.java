@@ -42,7 +42,7 @@ public class RefMine implements Runnable, Serializable {
         System.out.println("[INFO] ** Running RefMiner on "+repo.getName());
         String dir = "repos/"+repo.getName()+"_"+repo.getId();
 
-        if(runRef(repo.getUrl()+".git",repo.getId(),dir,branchName)){
+        if(runRef(repo,dir,branchName)){
             System.out.println("[INFO] ** RefMiner success on "+dir);
         }else
             System.out.println("[ERROR] ** RefMiner failed on "+dir+" (run [RefMine.java])");
@@ -50,22 +50,22 @@ public class RefMine implements Runnable, Serializable {
         Runtime.getRuntime().gc();
     }
 
-    private Boolean runRef(String gitURI, String id, String dir, String branchName){
+    private Boolean runRef(RepoInfo r, String dir, String branchName){
 
         Database db=new Manager().access();
-        if(db.insert("RepositoryStatus",new Object[]{id,2}))
-            System.out.println("[INFO] Updated repository status to in-progress: "+id);
+        if(db.insert("RepositoryStatus",new Object[]{r.getId(),2}))
+            System.out.println("[INFO] Updated repository status to in-progress: "+r.getId());
         else
-            System.out.println("[ERROR] Failed to update repository status to in-progress: "+id+" (runRef [RefMine" +
+            System.out.println("[ERROR] Failed to update repository status to in-progress: "+r.getId()+" (runRef [RefMine" +
                     ".java])");
         db.close();
 
         GitService gitService = new GitServiceImpl();
         try{
-            Repository repo = gitService.cloneIfNotExists(dir,gitURI);
+            Repository repo = gitService.cloneIfNotExists(dir,r.getUrl()+".git");
 
             // Run RefMiner
-            detectAll(id, gitURI, repo, branchName, new RefactoringHandler() {
+            detectAll(r.getId(), r.getUrl()+".git", repo, branchName, new RefactoringHandler() {
                 @Override
                 public void handleException(String commit, Exception e) {
                     System.out.println("[ERROR] Error processing commit " + commit+" (runRef [RefMine.java])");
@@ -81,10 +81,10 @@ public class RefMine implements Runnable, Serializable {
             }
 
             db=new Manager().access();
-            if(db.update("RepositoryStatus", new String[]{"status"},"id = ?",new Object[]{1,id}))
-                System.out.println("[INFO] Updated repository status to completed: "+id);
+            if(db.update("RepositoryStatus", new String[]{"status"},"id = ?",new Object[]{1,r.getId()}))
+                System.out.println("[INFO] Updated repository status to completed: "+r.getId());
             else
-                System.out.println("[ERROR] Failed to update repository status to completed: "+id+" (runRef [RefMine" +
+                System.out.println("[ERROR] Failed to update repository status to completed: "+r.getId()+" (runRef [RefMine" +
                         ".java])");
             db.close();
 

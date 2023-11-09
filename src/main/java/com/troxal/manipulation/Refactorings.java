@@ -15,6 +15,7 @@ import org.refactoringminer.api.RefactoringHandler;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -71,36 +72,53 @@ public class Refactorings implements Callable {
             }
 
             Database db=new Manager().access();
-            Object[] newCommit = {commitId,gitURI,id};
-            if(db.insert("Commits",newCommit))
-                System.out.println("[INFO] Added commit: "+commitId);
-            else
-                System.out.println("[ERROR] Failed to add commit: "+commitId+" (Refactorings.java)");
 
             List<Object[]> rList = new ArrayList<>();
-            List<Object[]> lsList = new ArrayList<>();
-            List<Object[]> rsList = new ArrayList<>();
             for(Refactoring refactoring : refactoringsAtRevision) {
                 System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
-                rList.add(new Object[]{commitId,refactoring.getName(),getMD5(refactoring.toJSON())});
                 for(CodeRange a : refactoring.leftSide()){
-                    lsList.add(new Object[]{commitId,getMD5(a.toString()),a.getEndLine(),
+                    rList.add(new Object[]{
+                            getMD5(refactoring.toJSON()),
+                            commitId,
+                            gitURI,
+                            id,
+                            refactoring.getName(),
+                            "left",
+                            a.getStartLine(),
+                            a.getEndLine(),
+                            a.getStartColumn(),
                             a.getEndColumn(),
-                            a.getStartColumn(),a.getFilePath(),a.getStartLine(),a.getCodeElementType(),
-                            a.getDescription(),a.getCodeElement()});
+                            a.getFilePath(),
+                            a.getCodeElementType().toString(),
+                            a.getDescription(),
+                            a.getCodeElement(),
+                            currentCommit.getAuthorIdent().getName(),
+                            currentCommit.getFullMessage(),
+                            LocalDateTime.ofInstant(currentCommit.getAuthorIdent().getWhenAsInstant(), currentCommit.getAuthorIdent().getTimeZone().toZoneId())});
                 }
                 for(CodeRange a : refactoring.rightSide()){
-                    rsList.add(new Object[]{commitId,getMD5(a.toString()),a.getEndLine(),a.getEndColumn(),
-                            a.getStartColumn(),a.getFilePath(),a.getStartLine(),a.getCodeElementType(),
-                            a.getDescription(),a.getCodeElement()});
+                    rList.add(new Object[]{
+                            getMD5(refactoring.toJSON()),
+                            commitId,
+                            gitURI,
+                            id,
+                            refactoring.getName(),
+                            "right",
+                            a.getStartLine(),
+                            a.getEndLine(),
+                            a.getStartColumn(),
+                            a.getEndColumn(),
+                            a.getFilePath(),
+                            a.getCodeElementType().toString(),
+                            a.getDescription(),
+                            a.getCodeElement(),
+                            currentCommit.getAuthorIdent().getName(),
+                            currentCommit.getFullMessage(),
+                            LocalDateTime.ofInstant(currentCommit.getAuthorIdent().getWhenAsInstant(), currentCommit.getAuthorIdent().getTimeZone().toZoneId())});
                 }
             }
 
-            db.insert("Refactorings",rList);
-
-            db.insert("Leftside_Refactorings",lsList);
-
-            db.insert("Rightside_Refactorings",rsList);
+            db.insert("Refactorings",rList,new Object[]{"refactoringhash", "commit", "repositoryid"});
 
             if(db.insert("CommitStatus",new Object[]{commitId,1}))
                 System.out.println("[INFO] Added commit status: "+id);

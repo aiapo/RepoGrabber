@@ -6,7 +6,7 @@ import java.util.List;
 public class Database implements AutoCloseable{
 
     // Create a database connection
-    protected Connection connection;
+    public Connection connection;
 
     // Import the Query class (this class will format the queries)
     protected QueryBuilder query;
@@ -76,9 +76,13 @@ public class Database implements AutoCloseable{
 
     // Inserts into a table an object of values
     public int[] insert(String table, List<Object[]> params){
+        return insert(table,params,null);
+    }
+
+    public int[] insert(String table, List<Object[]> params,Object[] conflict){
         if(!params.isEmpty()){
             query = new QueryBuilder();
-            query.insert(table).values(params.get(0));
+            query.insert(table).values(params.get(0)).onConflict(conflict);
 
             try {
                 PreparedStatement ps = connection.prepareStatement(query.stringifyQuery());
@@ -105,8 +109,12 @@ public class Database implements AutoCloseable{
 
     // Inserts into a table an object of values based on attributes
     public Boolean insert(String table, Object[] attributes, Object[] params){
+        return insert(table,attributes,params,null);
+    }
+
+    public Boolean insert(String table, Object[] attributes, Object[] params,Object[] conflict){
         query = new QueryBuilder();
-        query.insert(table).attributes(attributes).values(params);
+        query.insert(table).attributes(attributes).values(params).onConflict(conflict);
 
         if(execute(query.stringifyQuery(), params)==1)
             return true;
