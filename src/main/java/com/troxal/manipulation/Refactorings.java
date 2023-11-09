@@ -118,7 +118,7 @@ public class Refactorings implements Callable {
                 }
             }
 
-            db.insert("Refactorings",rList,new Object[]{"refactoringhash", "commit", "repositoryid"});
+            db.insert("Refactorings",rList,new Object[]{"refactoringhash", "commit", "repositoryid","refactoringside"});
 
             if(db.insert("CommitStatus",new Object[]{commitId,1}))
                 System.out.println("[INFO] Added commit status: "+id);

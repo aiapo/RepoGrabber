@@ -96,7 +96,7 @@ public class Manager{
                             "commitauthor    VARCHAR",
                             "commitmessage    VARCHAR",
                             "commitdate    TIMESTAMP",
-                            "PRIMARY KEY (refactoringhash, commit, repositoryid)"
+                            "PRIMARY KEY (refactoringhash, commit, repositoryid, refactoringside)"
                     });
 
     }
