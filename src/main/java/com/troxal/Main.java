@@ -4,7 +4,6 @@ import com.troxal.database.Manager;
 import com.troxal.jobs.RefMiner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
-import com.troxal.manipulation.CommitHistory;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -139,8 +138,6 @@ public class Main {
                         case 6:
                             newQuery = false;
                             break;
-                        case 7:
-                            new CommitHistory(rg);
                         default:
                             System.out.println("Invalid choice!");
                             break;
