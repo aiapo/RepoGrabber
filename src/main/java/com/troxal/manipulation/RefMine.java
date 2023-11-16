@@ -47,25 +47,24 @@ public class RefMine implements Runnable, Serializable {
         }else
             System.out.println("[ERROR] ** RefMiner failed on "+dir+" (run [RefMine.java])");
 
-        Runtime.getRuntime().gc();
+        //Runtime.getRuntime().gc();
     }
 
     private Boolean runRef(RepoInfo r, String dir, String branchName){
-
         Database db=new Manager().access();
+
         if(db.insert("RepositoryStatus",new Object[]{r.getId(),2}))
             System.out.println("[INFO] Updated repository status to in-progress: "+r.getId());
         else
             System.out.println("[ERROR] Failed to update repository status to in-progress: "+r.getId()+" (runRef [RefMine" +
                     ".java])");
-        db.close();
 
         GitService gitService = new GitServiceImpl();
         try{
             Repository repo = gitService.cloneIfNotExists(dir,r.getUrl()+".git");
 
             // Run RefMiner
-            detectAll(r.getId(), r.getUrl()+".git", repo, branchName, new RefactoringHandler() {
+            detectAll(db,r.getId(), r.getUrl()+".git", repo, branchName, new RefactoringHandler() {
                 @Override
                 public void handleException(String commit, Exception e) {
                     System.out.println("[ERROR] Error processing commit " + commit+" (runRef [RefMine.java])");
@@ -80,7 +79,6 @@ public class RefMine implements Runnable, Serializable {
                 System.out.println("[ERROR] "+e);
             }
 
-            db=new Manager().access();
             if(db.update("RepositoryStatus", new String[]{"status"},"id = ?",new Object[]{1,r.getId()}))
                 System.out.println("[INFO] Updated repository status to completed: "+r.getId());
             else
@@ -96,7 +94,7 @@ public class RefMine implements Runnable, Serializable {
     }
 
     private void detect(String id, String gitURI, GitService gitService, Repository repository,
-                        final RefactoringHandler handler, Iterator<RevCommit> i) {
+                        final RefactoringHandler handler, Iterator<RevCommit> i, Database db) {
         File metadataFolder = repository.getDirectory();
         File projectFolder = metadataFolder.getParentFile();
         String projectName = projectFolder.getName();
@@ -106,7 +104,6 @@ public class RefMine implements Runnable, Serializable {
             RevCommit currentCommit = i.next();
             Integer commitStatus = 0;
             try {
-                Database db=new Manager().access();
                 ResultSet cStatus = db.select("CommitStatus",new String[]{"status"},"id = ?",
                         new Object[]{currentCommit.getId().getName()});
                 if(cStatus.next()){
@@ -120,14 +117,14 @@ public class RefMine implements Runnable, Serializable {
                 }else{
                     try {
                         commitRuns.add(service.submit(new Refactorings(id, gitURI, gitService, repository, handler,
-                                currentCommit)));
+                                currentCommit,db)));
                     } catch (Exception e) {
                         System.out.println(String.format("[ERROR] Ignored revision %s due to error %s", currentCommit.getId().getName(),e));
                         handler.handleException(currentCommit.getId().getName(),e);
                     }
                 }
                 cStatus.close();
-                db.close();
+
             } catch (SQLException e) {
                 System.out.println("[ERROR] SQL Exception: "+e+" (detect [RefMine.java])");
             }
@@ -146,7 +143,7 @@ public class RefMine implements Runnable, Serializable {
         System.out.println("\nFinished all sub-threads for repo "+projectName);
     }
 
-    public void detectAll(String id, String gitURI, Repository repository, String branch,
+    public void detectAll(Database db,String id, String gitURI, Repository repository, String branch,
                           final RefactoringHandler handler) throws Exception {
         GitService gitService = new GitServiceImpl() {
             @Override
@@ -156,7 +153,7 @@ public class RefMine implements Runnable, Serializable {
         };
         RevWalk walk = gitService.createAllRevsWalk(repository, branch);
         try {
-            detect(id,gitURI,gitService, repository, handler, walk.iterator());
+            detect(id,gitURI,gitService, repository, handler, walk.iterator(),db);
         } finally {
             walk.dispose();
         }

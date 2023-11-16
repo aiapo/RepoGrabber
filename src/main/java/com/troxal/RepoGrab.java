@@ -364,29 +364,21 @@ public class RepoGrab {
                 repo.getWatchCount(),
                 repo.getBranchName()
         };
-        try{
-            if(db.select("Repositories",new String[]{"id"},"id = ?",new Object[]{repo.getId()}).wasNull()){
-                if(db.insert("Repositories",newRepo))
-                    System.out.println("[INFO] Added repo: "+repo.getName());
-                else
-                    System.out.println("[ERROR] Failed to add repo: "+repo.getName());
+        if(db.insert("Repositories",newRepo))
+            System.out.println("[INFO] Added repo: "+repo.getName());
+        else
+            System.out.println("[ERROR] Failed to add repo: "+repo.getName());
 
-                for(int j=0;j<repo.getLanguages().size();j++){
-                    Object[] newLanguage = {
-                            repo.getId(),
-                            repo.getLanguages().get(j).getName(),
-                            repo.getLanguages().get(j).getSize()
-                    };
-                    if(db.insert("Languages",new Object[]{"repoid","name","size"},newLanguage))
-                        System.out.println("[INFO] Added "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
-                    else
-                        System.out.println("[ERROR] Failed to add "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
-                }
-            }else{
-                System.out.println("[INFO] Repo "+repo.getName()+" already in DB.. skipping!");
-            }
-        }catch (SQLException e) {
-            System.out.println("[ERROR] "+e);
+        for(int j=0;j<repo.getLanguages().size();j++){
+            Object[] newLanguage = {
+                    repo.getId(),
+                    repo.getLanguages().get(j).getName(),
+                    repo.getLanguages().get(j).getSize()
+            };
+            if(db.insert("Languages",new Object[]{"repoid","name","size"},newLanguage))
+                System.out.println("[INFO] Added "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
+            else
+                System.out.println("[ERROR] Failed to add "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
         }
     }
 }

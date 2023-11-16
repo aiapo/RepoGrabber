@@ -28,15 +28,17 @@ public class Refactorings implements Callable {
     private Repository repository;
     private final RefactoringHandler handler;
     private RevCommit currentCommit;
+    private Database db;
 
     public Refactorings(String id, String gitURI, GitService gitService, Repository repository,
-                        RefactoringHandler handler, RevCommit currentCommit){
+                        RefactoringHandler handler, RevCommit currentCommit, Database db){
         this.gitService = gitService;
         this.repository = repository;
         this.handler = handler;
         this.currentCommit = currentCommit;
         this.id=id;
         this.gitURI=gitURI;
+        this.db=db;
     }
 
     @Override
@@ -71,14 +73,13 @@ public class Refactorings implements Callable {
                 refactoringsAtRevision = Collections.emptyList();
             }
 
-            Database db=new Manager().access();
-
             List<Object[]> rList = new ArrayList<>();
             for(Refactoring refactoring : refactoringsAtRevision) {
-                System.out.println("[DEBUG] Refactoring name: "+refactoring.getName());
+                System.out.println("[DEBUG] Detected "+id+"'s commit "+commitId+" refactored "+refactoring.getName());
+                String md5 = getMD5(refactoring.toJSON());
                 for(CodeRange a : refactoring.leftSide()){
                     rList.add(new Object[]{
-                            getMD5(refactoring.toJSON()),
+                            md5,
                             commitId,
                             gitURI,
                             id,
@@ -98,7 +99,7 @@ public class Refactorings implements Callable {
                 }
                 for(CodeRange a : refactoring.rightSide()){
                     rList.add(new Object[]{
-                            getMD5(refactoring.toJSON()),
+                            md5,
                             commitId,
                             gitURI,
                             id,
@@ -121,11 +122,9 @@ public class Refactorings implements Callable {
             db.insert("Refactorings",rList,new Object[]{"refactoringhash", "commit", "repositoryid","refactoringside"});
 
             if(db.insert("CommitStatus",new Object[]{commitId,1}))
-                System.out.println("[INFO] Added commit status: "+id);
+                System.out.println("[INFO] Added commit status for repo "+id+": "+commitId);
             else
                 System.out.println("[ERROR] Failed to add commit status: "+id+" (Refactorings.java)");
-
-            db.close();
 
             // garbage collection
             refactoringsAtRevision.clear();
@@ -139,7 +138,7 @@ public class Refactorings implements Callable {
 
             return true;
         } catch (Exception e) {
-            System.out.println("[ERROR] "+e+" (call [Refactorings.java])");
+            System.out.println("[ERROR] "+id+": " +e+" (call [Refactorings.java])");
             return false;
         }
     }
