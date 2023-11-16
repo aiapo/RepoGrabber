@@ -18,8 +18,8 @@ public class RefMiner {
     public static void runJobs(RepoGrab repos){
         Database db=new Manager().access();
 
-        ExecutorService executor = Executors.newWorkStealingPool();
-        ExecutorService service = Executors.newWorkStealingPool();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService service = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors()*3);
 
         List<RepoInfo> holdPool = new ArrayList<>();
         List<Future> repoRuns = new ArrayList<>();
