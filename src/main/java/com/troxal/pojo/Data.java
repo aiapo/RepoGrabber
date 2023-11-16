@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 @Generated("jsonschema2pojo")
 public class Data {
-
+    private String errorType;
     @JsonProperty("rateLimit")
     private RateLimit rateLimit;
     @JsonProperty("search")
@@ -52,5 +52,11 @@ public class Data {
     public void setRepo(Repo repo) {
         this.repo = repo;
     }
+
+    public void setErrorType(String errorType) {
+        this.errorType = errorType;
+    }
+
+    public String getErrorType(){ return errorType; }
 
 }

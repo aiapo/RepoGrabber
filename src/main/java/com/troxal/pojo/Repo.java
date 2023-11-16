@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
@@ -33,7 +35,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "issueUsers",
     "mentionableUsers",
     "languages",
-    "mainBranch"
+    "mainBranch",
+    "node"
 })
 @Generated("jsonschema2pojo")
 public class Repo {
@@ -90,6 +93,8 @@ public class Repo {
     private Languages languages;
     @JsonProperty("mainBranch")
     private MainBranch mainBranch;
+    @JsonProperty("node")
+    private Node node;
 
     @JsonProperty("id")
     public String getId() {
@@ -349,6 +354,14 @@ public class Repo {
     @JsonProperty("mainBranch")
     public void setMainBranch(MainBranch mainBranch) {
         this.mainBranch = mainBranch;
+    }
+
+    @JsonProperty("node")
+    public Node getNode() { return node; }
+
+    @JsonProperty("node")
+    public void setNode(Node node) {
+        this.node = node;
     }
 
 }
