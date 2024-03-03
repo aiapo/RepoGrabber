@@ -45,3 +45,5 @@ build/
 
 ### .env ###
 config/.env
+config/application_default_credentials.json
+.idea/misc.xml
