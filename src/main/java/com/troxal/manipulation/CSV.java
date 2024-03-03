@@ -3,6 +3,8 @@ package com.troxal.manipulation;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
+import com.troxal.database.Database;
+import com.troxal.database.Manager;
 import com.troxal.pojo.LanguageInfo;
 import com.troxal.pojo.RepoInfo;
 
@@ -10,9 +12,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CSV {
     // Create CSV of all repos
@@ -188,6 +196,96 @@ public class CSV {
         } catch (Exception e) {
             e.printStackTrace();
             return repos;
+        }
+    }
+    public static void createFromDB(Boolean headless){
+        if(!headless){
+            //Allows user to input filename for CSV and fixes any illegal characters
+            System.out.println("Enter a name for the file here: ");
+            Scanner fileInput = new Scanner(System.in);
+            fileName = fileInput.nextLine();
+            fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+        }else{
+            fileName="Repos";
+        }
+        new File("./results").mkdirs();
+        File file = new File("results/"+ fileName + ".csv");
+        try
+        {
+            // Use CSVWriter to create a new CSV
+            CSVWriter writer = new CSVWriter(new FileWriter(file));
+
+            // Write header stuff
+            String[] headerTxt = {"Github ID","Repository Name","Owner","Github Link","Description","Primary Language",
+                    "Creation Date","Update Date","Push Date","Is Archived","Archived At","Is Fork","Is Empty",
+                    "Is Locked","Is Disabled","Is Template","Mentionable Users","Issue Users","Committers","Total Size",
+                    "Total Commits","Total Issues","Forks","Stars","Watchers","Languages","Branch Name","ReadMe",
+                    "Domain"};
+            writer.writeNext(headerTxt);
+
+            try {
+                Database db = new Manager().access();
+                ResultSet repos = db.select("Repositories",new String[]{"*"});
+                while(repos.next()){
+                    String repoId = repos.getString("id");
+                    // Language stuff to make each language a single row (ex: 'Java:378030 Shell:2612 C++:2566')
+                    StringBuilder sb = new StringBuilder();
+                    ResultSet languages = db.select("Languages",new String[]{"*"},"repoid = ?",new Object[]{repoId});
+                    while(languages.next()){
+                        sb.append(languages.getString("name")+":"+languages.getString("size")+"' ");
+                    }
+                    languages.close();
+
+                    String readMe = "";
+                    if(repos.getString("readme")!=null)
+                        readMe = repos.getString("readme")
+                                .replaceAll("[^a-zA-Z0-9]", " ");
+
+                    // Build row
+                    String tempLine[] = new String[]{
+                            repoId,
+                            repos.getString("name"),
+                            repos.getString("owner"),
+                            repos.getString("url"),
+                            repos.getString("description"),
+                            repos.getString("primarylanguage"),
+                            repos.getString("creationdate"),
+                            repos.getString("updatedate"),
+                            repos.getString("pushdate"),
+                            String.valueOf(repos.getBoolean("isarchived")),
+                            repos.getString("archivedat"),
+                            String.valueOf(repos.getBoolean("isforked")),
+                            String.valueOf(repos.getBoolean("isempty")),
+                            String.valueOf(repos.getBoolean("islocked")),
+                            String.valueOf(repos.getBoolean("isdisabled")),
+                            String.valueOf(repos.getBoolean("istemplate")),
+                            String.valueOf(repos.getInt("totalissueusers")),
+                            String.valueOf(repos.getInt("totalmentionableusers")),
+                            String.valueOf(repos.getInt("totalcommittercount")),
+                            String.valueOf(repos.getInt("totalprojectsize")),
+                            String.valueOf(repos.getInt("totalcommits")),
+                            String.valueOf(repos.getInt("issuecount")),
+                            String.valueOf(repos.getInt("forkcount")),
+                            String.valueOf(repos.getInt("starcount")),
+                            String.valueOf(repos.getInt("watchcount")),
+                            sb.toString(),
+                            repos.getString("branchname"),
+                            readMe,
+                            repos.getString("domain")
+                    };
+
+                    // Write row to CSV
+                    writer.writeNext(tempLine);
+                }
+                repos.close();
+                db.close();
+                writer.close();
+
+            } catch (SQLException e) {
+                System.out.println("[ERROR] SQL Exception: "+e+" (detect [RefMine.java])");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
