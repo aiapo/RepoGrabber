@@ -59,6 +59,7 @@ public class Manager{
                         "STARCOUNT INTEGER NOT NULL",
                         "WATCHCOUNT INTEGER NOT NULL",
                         "BRANCHNAME VARCHAR NOT NULL",
+                        "README TEXT"
                 });
             DB.create(
                 "RepositoryStatus", new Object[]{
@@ -98,6 +99,26 @@ public class Manager{
                             "commitdate    TIMESTAMP",
                             "PRIMARY KEY (refactoringhash, commit, repositoryid, refactoringside)"
                     });
+            DB.create(
+                "Stats", new Object[]{
+                            "rCommit    VARCHAR NOT NULL",
+                            "rSide    VARCHAR NOT NULL",
+                            "commit VARCHAR NOT NULL",
+                            "class  VARCHAR NOT NULL",
+                            "package    VARCHAR NOT NULL",
+                            "refactoredElement  VARCHAR NOT NULL",
+                            "intention  BOOLEAN NOT NULL",
+                            "fieldCount  VARCHAR NOT NULL",
+                            "methodCount  VARCHAR NOT NULL",
+                            "isAbstract  BOOLEAN NOT NULL",
+                            "isPublic  BOOLEAN NOT NULL",
+                            "isPrivate  BOOLEAN NOT NULL",
+                            "isProtected  BOOLEAN NOT NULL",
+                            "isStatic  BOOLEAN NOT NULL",
+                            "classStartLine  INTEGER NOT NULL",
+                            "classEndLine  INTEGER NOT NULL",
+                            "PRIMARY KEY (rCommit, rSide, commit, class, package, refactoredElement)"
+                });
 
     }
 
