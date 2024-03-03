@@ -32,11 +32,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GitChanges {
     ExecutorService dbExecutor = Executors.newFixedThreadPool(30);
     ExecutorService reposExecutor = Executors.newFixedThreadPool(2);
+    ExecutorService commitExecutor = Executors.newFixedThreadPool(30);
     private Database db;
 
     public GitChanges(RepoGrab repos){
@@ -60,11 +62,18 @@ public class GitChanges {
         while (!dbExecutor.isTerminated()) {
         }
 
+        // Shut down threads
+        commitExecutor.shutdown();
+        // Wait for all threads to terminate
+        while (!commitExecutor.isTerminated()) {
+        }
+
         db.close();
         System.out.println("[INFO] Finished!");
     }
 
     private void classStatistics(RepoInfo r) {
+        List<Future> commitRuns = new ArrayList<>();
         System.out.println("[DEBUG] Start '"+r.getName()+"' analysis task!");
         // directory unique
         String dir = "repos/" + r.getName() + "_" + r.getId();
@@ -84,94 +93,125 @@ public class GitChanges {
 
             // for each *left* commit
             while(leftSide.next()){
-                // get what was refactored
-                RevCommit newCommit;
-                String hashID = leftSide.getString("commit");
-                String refactoringHash = leftSide.getString("refactoringhash");
-                String description = leftSide.getString("commitmessage");
-                Boolean dIntent = false;
-
-                System.out.println("[DEBUG] Got left side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
-
-                // intent is that the committer wrote in their message that it's a refactoring
-                if(description.contains("refactor"))
-                    dIntent = true;
-
                 // left side specifics
                 String leftFilePath = leftSide.getString("filepath");
                 String leftField = leftSide.getString("codeelement").split("\\s+")[1];
                 Integer leftFieldStartLine = leftSide.getInt("startline");
 
-                // get right side
-                ResultSet rightSide = db.select("Refactorings",new String[]{"*"},"refactoringhash = ?" +
-                        " AND refactoringside = ?", new Object[]{refactoringHash, "right"});
+                // commit stats
+                String hashID = leftSide.getString("commit");
+                String refactoringHash = leftSide.getString("refactoringhash");
+                String description = leftSide.getString("commitmessage");
 
-                System.out.println("[DEBUG] Got right side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
+                System.out.println("[DEBUG] Got left side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
 
-                String rightFilePath = "";
-                String rightField = "";
-                Integer rightFieldStartLine = 0;
+                commitRuns.add(commitExecutor.submit(() -> {
+                    System.out.println("[DEBUG] Start commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
+                    try{
+                        // get what was refactored
+                        RevCommit newCommit;
+                        MoveAttributeInfo left = new MoveAttributeInfo();
+                        MoveAttributeInfo right = new MoveAttributeInfo();
 
-                // right side specifics
-                if(rightSide.next()) {
-                    rightFilePath = rightSide.getString("filepath");
-                    rightField = rightSide.getString("codeelement").split("\\s+")[1];
-                    rightFieldStartLine = rightSide.getInt("startline");
-                }
+                        Boolean dIntent = false;
 
-                // try to get the given commit (in this case the refactored/right side)
-                try (RevWalk walk = new RevWalk(repo)) {
-                    newCommit = walk.parseCommit(repo.resolve(hashID));
+                        // intent is that the committer wrote in their message that it's a refactoring
+                        if(description.contains("refactor"))
+                            dIntent = true;
 
-                    //Get commit that is previous to the current one (in this case the original/left side)
-                    RevCommit oldCommit = null;
-                    try (RevWalk walkB = new RevWalk(repo)) {
-                        // Starting point
-                        walkB.markStart(newCommit);
-                        int count = 0;
-                        for (RevCommit rev : walkB) {
-                            // got the previous commit.
-                            if (count == 1) {
-                                oldCommit = rev;
-                            }
-                            count++;
+                        // get right side
+                        ResultSet rightSide = db.select("Refactorings",new String[]{"*"},"refactoringhash = ?" +
+                                " AND refactoringside = ?", new Object[]{refactoringHash, "right"});
+
+                        System.out.println("[DEBUG] Got right side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
+
+                        String rightFilePath = "";
+                        String rightField = "";
+                        Integer rightFieldStartLine = 0;
+
+                        // right side specifics
+                        if(rightSide.next()) {
+                            rightFilePath = rightSide.getString("filepath");
+                            rightField = rightSide.getString("codeelement").split("\\s+")[1];
+                            rightFieldStartLine = rightSide.getInt("startline");
                         }
-                        walkB.dispose();
+
+                        // try to get the given commit (in this case the refactored/right side)
+                        try (RevWalk walk = new RevWalk(repo)) {
+                            newCommit = walk.parseCommit(repo.resolve(hashID));
+
+                            //Get commit that is previous to the current one (in this case the original/left side)
+                            RevCommit oldCommit = null;
+                            try (RevWalk walkB = new RevWalk(repo)) {
+                                // Starting point
+                                walkB.markStart(newCommit);
+                                int count = 0;
+                                for (RevCommit rev : walkB) {
+                                    // got the previous commit.
+                                    if (count == 1) {
+                                        oldCommit = rev;
+                                    }
+                                    count++;
+                                }
+                                walkB.dispose();
+                            }
+
+                            // previous commit (original)
+                            if(oldCommit!=null){
+                                System.out.println("[DEBUG] Got left side of repo for hash "+hashID+" for repo '"+r.getName()+"'!");
+                                left = getCStat(repo,oldCommit,leftFilePath,leftField,leftFieldStartLine,false);
+                                oldCommit.disposeBody();
+
+                                // current commit (refactored)
+                                System.out.println("[DEBUG] Got right side of repo for hash "+hashID+" for repo '"+r.getName()+
+                                        "'!");
+                                right = getCStat(repo,newCommit,rightFilePath,rightField,rightFieldStartLine,true);
+                                newCommit.disposeBody();
+
+                                printStats(left, oldCommit.getName(), "left", leftFilePath);
+                                printStats(right, newCommit.getName(), "right", rightFilePath);
+                            }
+                        } catch (AmbiguousObjectException e) {
+                            System.out.println("[ERROR] AmbiguousObjectException: "+e);
+                        } catch (IncorrectObjectTypeException e) {
+                            System.out.println("[ERROR] IncorrectObjectTypeException: "+e);
+                        } catch (MissingObjectException e) {
+                            System.out.println("[ERROR] MissingObjectException: "+e);
+                        } catch (IOException e) {
+                            System.out.println("[ERROR] IOException: "+e);
+                        }
+
+                        // close *this* right side
+                        rightSide.close();
+
+                        System.out.println("[DEBUG] Finished commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
+                    }catch(SQLException e){
+                        System.out.println("[ERROR] SQLException: "+e);
                     }
+                }));
+            }
 
-                    // previous commit (original)
-                    if(oldCommit!=null){
-                        System.out.println("[DEBUG] Got left side of repo for hash "+hashID+" for repo '"+r.getName()+"'!");
-                        getCStat(repo,oldCommit,leftFilePath,leftField,leftFieldStartLine,false);
-                        oldCommit.disposeBody();
+            // Wait for all commits for this repository to be done before we close the repo
+            for(Future fut : commitRuns){
+                try {
+                    Object commit = fut.get();
+                    if (commit!=null){
+                        System.out.println("[ERROR] Error with thread, no return! (classStatistics [GitChanges.java])");
                     }
-
-                    // current commit (refactored)
-                    System.out.println("[DEBUG] Got right side of repo for hash "+hashID+" for repo '"+r.getName()+
-                            "'!");
-                    getCStat(repo,newCommit,rightFilePath,rightField,rightFieldStartLine,true);
-                    newCommit.disposeBody();
-
-                } catch (AmbiguousObjectException e) {
-                    System.out.println("[ERROR] AmbiguousObjectException: "+e);
-                } catch (IncorrectObjectTypeException e) {
-                    System.out.println("[ERROR] IncorrectObjectTypeException: "+e);
-                } catch (MissingObjectException e) {
-                    System.out.println("[ERROR] MissingObjectException: "+e);
-                } catch (IOException e) {
-                    System.out.println("[ERROR] IOException: "+e);
+                }catch (Exception e) {
+                    System.out.println("[ERROR] Thread Future: "+e+" (classStatistics [GitChanges.java])");
                 }
-
-                // close *this* right side
-                rightSide.close();
             }
 
             // close the git repo
             git.close();
+            commitRuns.clear();
+            System.out.println("[DEBUG] Closed repo '"+r.getName()+"' via git!");
 
             // and delete the repo
             try {
                 FileUtils.deleteDirectory(new File(dir));
+                System.out.println("[DEBUG] Deleted repo '"+r.getName()+"' local directory!");
             } catch (IOException e) {
                 System.out.println("[ERROR] " + e);
             }
@@ -194,6 +234,7 @@ public class GitChanges {
         } catch (SQLException e) {
             System.out.println("[ERROR] SQLException: "+e);
         }
+        System.out.println("[DEBUG] End '"+r.getName()+"' analysis task!");
     }
 
     private MoveAttributeInfo getCStat(Repository repo,RevCommit commit,String filePath,String field,
@@ -265,17 +306,6 @@ public class GitChanges {
                 }
             });
 
-            // print some stats
-            System.out.println(" -- ");
-            System.out.println("[COMMIT] "+commit.getName());
-            System.out.println("[PACKAGE] "+packageName);
-            System.out.println("[CLASS] "+f.getNameAsString());
-            System.out.println("[CLASS ACCESS] "+classAccess);
-            System.out.println("[FILE PATH] "+filePath);
-            System.out.println("[REFACTORED FIELD] "+field);
-            System.out.println("[FIELD ACCESS] "+fieldAccess);
-            System.out.println(" -- \n");
-
             // return MoveAttributeInfo with all the info
             return new MoveAttributeInfo(refactored,packageName.get(),
                     f.getNameAsString(), classAccess, f.isAbstract(), f.isStatic(), f.isInnerClass(),
@@ -307,5 +337,19 @@ public class GitChanges {
             System.out.println("[ERROR] IOException: "+e);
         }
         return "";
+    }
+
+    private void printStats(MoveAttributeInfo info,String commit,String side,String path){
+        // print some stats
+        System.out.println(" -- ");
+        System.out.println("[SIDE] "+side);
+        System.out.println("[COMMIT] "+commit);
+        System.out.println("[PACKAGE] "+info.getPackageName());
+        System.out.println("[CLASS] "+info.getClassI().getName());
+        System.out.println("[CLASS ACCESS] "+info.getClassI().getAccess());
+        System.out.println("[FILE PATH] "+path);
+        System.out.println("[REFACTORED FIELD] "+info.getFieldI().getName());
+        System.out.println("[FIELD ACCESS] "+info.getFieldI().getAccess());
+        System.out.println(" -- \n");
     }
 }
