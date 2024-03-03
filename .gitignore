@@ -46,4 +46,5 @@ build/
 ### .env ###
 config/.env
 config/application_default_credentials.json
+RepoGrabber.jar
 .idea/misc.xml
