@@ -26,10 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -95,13 +92,22 @@ public class GitChanges {
             while(leftSide.next()){
                 // left side specifics
                 String leftFilePath = leftSide.getString("filepath");
-                String leftField = leftSide.getString("codeelement").split("\\s+")[1];
+                String leftCodeElement = leftSide.getString("codeelement");
+                String leftCodeElementType = leftSide.getString("codeelementtype");
+                String leftField = leftCodeElement.split("\\s+")[1];
+                String leftDescription = leftSide.getString("description");
                 Integer leftFieldStartLine = leftSide.getInt("startline");
+                Integer leftFieldEndLine = leftSide.getInt("endline");
+                Integer leftFieldStartColumn = leftSide.getInt("startcolumn");
+                Integer leftFieldEndColumn = leftSide.getInt("endcolumn");
 
                 // commit stats
                 String hashID = leftSide.getString("commit");
                 String refactoringHash = leftSide.getString("refactoringhash");
                 String description = leftSide.getString("commitmessage");
+                String refactoringName = leftSide.getString("refactoringname");
+                String commitAuthor = leftSide.getString("commitAuthor");
+                Date commitDate = leftSide.getDate("commitDate");
 
                 System.out.println("[DEBUG] Got left side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
 
@@ -127,13 +133,25 @@ public class GitChanges {
 
                         String rightFilePath = "";
                         String rightField = "";
+                        String rightCodeElement = "";
+                        String rightCodeElementType = "";
+                        String rightDescription = "";
                         Integer rightFieldStartLine = 0;
+                        Integer rightFieldEndLine = 0;
+                        Integer rightFieldStartColumn = 0;
+                        Integer rightFieldEndColumn = 0;
 
                         // right side specifics
                         if(rightSide.next()) {
                             rightFilePath = rightSide.getString("filepath");
-                            rightField = rightSide.getString("codeelement").split("\\s+")[1];
+                            rightCodeElement = rightSide.getString("codeelement");
+                            rightCodeElementType = rightSide.getString("codeelementtype");
+                            rightDescription = rightSide.getString("description");
+                            rightField = rightCodeElement.split("\\s+")[1];
                             rightFieldStartLine = rightSide.getInt("startline");
+                            rightFieldEndLine = rightSide.getInt("endline");
+                            rightFieldStartColumn = rightSide.getInt("startcolumn");
+                            rightFieldEndColumn = rightSide.getInt("endcolumn");
                         }
 
                         // try to get the given commit (in this case the refactored/right side)
@@ -168,8 +186,72 @@ public class GitChanges {
                                 right = getCStat(repo,newCommit,rightFilePath,rightField,rightFieldStartLine,true);
                                 newCommit.disposeBody();
 
-                                printStats(left, oldCommit.getName(), "left", leftFilePath);
-                                printStats(right, newCommit.getName(), "right", rightFilePath);
+                                if(!Objects.equals(left.getPackageName(), "")&&!Objects.equals(right.getPackageName(),
+                                        "")){
+                                    statsList.add(new Object[]{
+                                            refactoringHash,
+                                            hashID,
+                                            r.getUrl()+".git",
+                                            r.getId(),
+                                            refactoringName,
+                                            commitAuthor,
+                                            description,
+                                            commitDate,
+                                            dIntent,
+                                            oldCommit.getName(),
+                                            leftFieldStartLine,
+                                            leftFieldEndLine,
+                                            leftFieldStartColumn,
+                                            leftFieldEndColumn,
+                                            leftFilePath,
+                                            leftDescription,
+                                            leftCodeElementType,
+                                            leftCodeElement,
+                                            left.getPackageName(),
+                                            left.getClassI().getName(),
+                                            left.getClassI().getFieldCount(),
+                                            left.getClassI().getMethodCount(),
+                                            left.getClassI().getAccess(),
+                                            left.getClassI().getIsAbstract(),
+                                            left.getClassI().getIsStatic(),
+                                            left.getClassI().getIsInnerClass(),
+                                            left.getClassI().getStartLine(),
+                                            left.getClassI().getEndLine(),
+                                            left.getFieldI().getName(),
+                                            left.getFieldI().getAccess(),
+                                            left.getFieldI().getIsAbstract(),
+                                            left.getFieldI().getIsStatic(),
+                                            left.getFieldI().getIsFinal(),
+                                            left.getFieldI().getStartLine(),
+                                            left.getFieldI().getEndLine(),
+                                            newCommit.getName(),
+                                            rightFieldStartLine,
+                                            rightFieldEndLine,
+                                            rightFieldStartColumn,
+                                            rightFieldEndColumn,
+                                            rightFilePath,
+                                            rightDescription,
+                                            rightCodeElementType,
+                                            rightCodeElement,
+                                            right.getPackageName(),
+                                            right.getClassI().getName(),
+                                            right.getClassI().getFieldCount(),
+                                            right.getClassI().getMethodCount(),
+                                            right.getClassI().getAccess(),
+                                            right.getClassI().getIsAbstract(),
+                                            right.getClassI().getIsStatic(),
+                                            right.getClassI().getIsInnerClass(),
+                                            right.getClassI().getStartLine(),
+                                            right.getClassI().getEndLine(),
+                                            right.getFieldI().getName(),
+                                            right.getFieldI().getAccess(),
+                                            right.getFieldI().getIsAbstract(),
+                                            right.getFieldI().getIsStatic(),
+                                            right.getFieldI().getIsFinal(),
+                                            right.getFieldI().getStartLine(),
+                                            right.getFieldI().getEndLine()
+                                    });
+                                }
                             }
                         } catch (AmbiguousObjectException e) {
                             System.out.println("[ERROR] AmbiguousObjectException: "+e);
@@ -219,16 +301,16 @@ public class GitChanges {
             // close this repo's left resultset
             leftSide.close();
 
-/*            // add the stats to the database
+            // add the stats to the database
             dbExecutor.submit(() -> {
                 Database dba=new Manager().access();
                 System.out.println("[INFO] Start repository stats to db: "+r.getName()+" with "+statsList.size()+" " +
                         "entries.");
-                dba.insert("Stats", statsList, new Object[]{"rCommit", "rSide", "commit", "class", "package",
-                        "refactoredElement"});
+                dba.insert("info", statsList, new Object[]{"refactorHash", "refactorCommit", "repositoryId",
+                        "refactoringName"});
                 dba.close();
                 System.out.println("[INFO] Finished repository stats to db: "+r.getName());
-            });*/
+            });
         } catch (GitAPIException e) {
             System.out.println("[ERROR] GitAPIException: "+e);
         } catch (SQLException e) {
