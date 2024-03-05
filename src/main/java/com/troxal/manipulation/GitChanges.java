@@ -3,8 +3,10 @@ package com.troxal.manipulation;
 import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.troxal.RepoGrab;
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
@@ -34,12 +36,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GitChanges {
     ExecutorService dbExecutor = Executors.newFixedThreadPool(30);
-    ExecutorService reposExecutor = Executors.newFixedThreadPool(2);
-    ExecutorService commitExecutor = Executors.newFixedThreadPool(30);
+    ExecutorService reposExecutor = Executors.newFixedThreadPool(12);
+    ExecutorService commitExecutor = Executors.newFixedThreadPool(50);
     private Database db;
+    private Integer count = 0;
+    private Integer totalRepos = 0;
 
     public GitChanges(RepoGrab repos){
         db=new Manager().access();
+        totalRepos = repos.getRepos().size();
 
         for(RepoInfo r : repos.getRepos()){
             reposExecutor.submit(() -> {
@@ -71,252 +76,249 @@ public class GitChanges {
 
     private void classStatistics(RepoInfo r) {
         List<Future> commitRuns = new ArrayList<>();
-        System.out.println("[DEBUG] Start '"+r.getName()+"' analysis task!");
+        count++;
+        System.out.println("[DEBUG] ["+count+"/"+totalRepos+"] Start '"+r.getName()+"' analysis task!");
         // directory unique
         String dir = "repos/" + r.getName() + "_" + r.getId();
         try {
-            // open the git repo
-            Git git = Git.cloneRepository().
-                    setNoCheckout(true).setURI(r.getUrl()+".git").setDirectory(new File(dir)).call();
-            Repository repo = git.getRepository();
-            System.out.println("[DEBUG] Opened repo '"+r.getName()+"' via git!");
+            ResultSet repoA = db.select("info", new String[]{"refactorcommit"}, "repositoryid = ?",
+                    new Object[]{r.getId()});
 
-            List<Object[]> statsList = new ArrayList<>();
+            if (!repoA.next()) {
+                try{
+                    // open the git repo
+                    Git git = Git.cloneRepository().
+                            setNoCheckout(true).setURI(r.getUrl()+".git").setDirectory(new File(dir)).call();
+                    Repository repo = git.getRepository();
+                    System.out.println("[DEBUG] Opened repo '"+r.getName()+"' via git!");
 
-            // select all the commits for (in this case) move attribute refactoring for a given repo on the *left* side
-            ResultSet leftSide = db.select("Refactorings",new String[]{"*"},"refactoringname = ? AND " +
+                    List<Object[]> statsList = new ArrayList<>();
+
+                    // select all the commits for (in this case) move attribute refactoring for a given repo on the *left* side
+                    ResultSet leftSide = db.select("Refactorings",new String[]{"*"},"refactoringname = ? AND " +
                             "repositoryid = ? AND refactoringside = ?", new Object[]{"Move Attribute",r.getId(),"left"});
-            System.out.println("[DEBUG] Got all left sides for repo '"+r.getName()+"'!");
+                    System.out.println("[DEBUG] Got all left sides for repo '"+r.getName()+"'!");
 
-            // for each *left* commit
-            while(leftSide.next()){
-                // left side specifics
-                String leftFilePath = leftSide.getString("filepath");
-                String leftCodeElement = leftSide.getString("codeelement");
-                String leftCodeElementType = leftSide.getString("codeelementtype");
-                String leftField = leftCodeElement.split("\\s+")[1];
-                String leftDescription = leftSide.getString("description");
-                Integer leftFieldStartLine = leftSide.getInt("startline");
-                Integer leftFieldEndLine = leftSide.getInt("endline");
-                Integer leftFieldStartColumn = leftSide.getInt("startcolumn");
-                Integer leftFieldEndColumn = leftSide.getInt("endcolumn");
+                    // for each *left* commit
+                    while(leftSide.next()){
+                        // left side specifics
+                        String leftFilePath = leftSide.getString("filepath");
+                        String leftCodeElement = leftSide.getString("codeelement");
+                        String leftCodeElementType = leftSide.getString("codeelementtype");
+                        String leftField = leftCodeElement.split("\\s+")[1];
+                        String leftDescription = leftSide.getString("description");
+                        Integer leftFieldStartLine = leftSide.getInt("startline");
+                        Integer leftFieldEndLine = leftSide.getInt("endline");
+                        Integer leftFieldStartColumn = leftSide.getInt("startcolumn");
+                        Integer leftFieldEndColumn = leftSide.getInt("endcolumn");
 
-                // commit stats
-                String hashID = leftSide.getString("commit");
-                String refactoringHash = leftSide.getString("refactoringhash");
-                String description = leftSide.getString("commitmessage");
-                String refactoringName = leftSide.getString("refactoringname");
-                String commitAuthor = leftSide.getString("commitAuthor");
-                Date commitDate = leftSide.getDate("commitDate");
+                        // commit stats
+                        String hashID = leftSide.getString("commit");
+                        String refactoringHash = leftSide.getString("refactoringhash");
+                        String description = leftSide.getString("commitmessage");
+                        String refactoringName = leftSide.getString("refactoringname");
+                        String commitAuthor = leftSide.getString("commitAuthor");
+                        Date commitDate = leftSide.getDate("commitDate");
 
-                System.out.println("[DEBUG] Got left side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
+                        System.out.println("[DEBUG] Got left side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
 
-                commitRuns.add(commitExecutor.submit(() -> {
-                    System.out.println("[DEBUG] Start commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
-                    try{
-                        // get what was refactored
-                        RevCommit newCommit;
-                        MoveAttributeInfo left = new MoveAttributeInfo();
-                        MoveAttributeInfo right = new MoveAttributeInfo();
+                        commitRuns.add(commitExecutor.submit(() -> {
+                            System.out.println("[DEBUG] Start commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
+                            try {
+                                // get what was refactored
+                                RevCommit newCommit;
+                                MoveAttributeInfo left;
+                                MoveAttributeInfo right;
 
-                        Boolean dIntent = false;
+                                // intent is that the committer wrote in their message that it's a refactoring
+                                Boolean dIntent = description.contains("refactor");
 
-                        // intent is that the committer wrote in their message that it's a refactoring
-                        if(description.contains("refactor"))
-                            dIntent = true;
+                                // get right side
+                                ResultSet rightSide = db.select("Refactorings", new String[]{"*"}, "refactoringhash = ?" +
+                                        " AND refactoringside = ?", new Object[]{refactoringHash, "right"});
 
-                        // get right side
-                        ResultSet rightSide = db.select("Refactorings",new String[]{"*"},"refactoringhash = ?" +
-                                " AND refactoringside = ?", new Object[]{refactoringHash, "right"});
+                                System.out.println("[DEBUG] Got right side DB for hash " + hashID + " for repo '" + r.getName() + "'!");
 
-                        System.out.println("[DEBUG] Got right side DB for hash "+hashID+" for repo '"+r.getName()+"'!");
+                                // right side specifics
+                                if (rightSide.next()) {
+                                    String rightFilePath = rightSide.getString("filepath");
+                                    String rightCodeElement = rightSide.getString("codeelement");
+                                    String rightCodeElementType = rightSide.getString("codeelementtype");
+                                    String rightDescription = rightSide.getString("description");
+                                    String rightField = rightCodeElement.split("\\s+")[1];
+                                    Integer rightFieldStartLine = rightSide.getInt("startline");
+                                    Integer rightFieldEndLine = rightSide.getInt("endline");
+                                    Integer rightFieldStartColumn = rightSide.getInt("startcolumn");
+                                    Integer rightFieldEndColumn = rightSide.getInt("endcolumn");
 
-                        String rightFilePath = "";
-                        String rightField = "";
-                        String rightCodeElement = "";
-                        String rightCodeElementType = "";
-                        String rightDescription = "";
-                        Integer rightFieldStartLine = 0;
-                        Integer rightFieldEndLine = 0;
-                        Integer rightFieldStartColumn = 0;
-                        Integer rightFieldEndColumn = 0;
+                                    // try to get the given commit (in this case the refactored/right side)
+                                    try (RevWalk walk = new RevWalk(repo)) {
+                                        newCommit = walk.parseCommit(repo.resolve(hashID));
 
-                        // right side specifics
-                        if(rightSide.next()) {
-                            rightFilePath = rightSide.getString("filepath");
-                            rightCodeElement = rightSide.getString("codeelement");
-                            rightCodeElementType = rightSide.getString("codeelementtype");
-                            rightDescription = rightSide.getString("description");
-                            rightField = rightCodeElement.split("\\s+")[1];
-                            rightFieldStartLine = rightSide.getInt("startline");
-                            rightFieldEndLine = rightSide.getInt("endline");
-                            rightFieldStartColumn = rightSide.getInt("startcolumn");
-                            rightFieldEndColumn = rightSide.getInt("endcolumn");
-                        }
+                                        //Get commit that is previous to the current one (in this case the original/left side)
+                                        try (RevWalk walkB = new RevWalk(repo)) {
+                                            // Starting point
+                                            walkB.markStart(newCommit);
+                                            int count = 0;
+                                            for (RevCommit rev : walkB) {
+                                                // got the previous commit.
+                                                if (count == 1) {
+                                                    if(rev!=null){
+                                                        System.out.println("[DEBUG] Got left side of repo for hash "
+                                                                + hashID + " for repo '" + r.getName() + "'!");
+                                                        left = getCStat(repo, rev, leftFilePath, leftField,
+                                                                leftFieldStartLine, false);
+                                                        rev.disposeBody();
 
-                        // try to get the given commit (in this case the refactored/right side)
-                        try (RevWalk walk = new RevWalk(repo)) {
-                            newCommit = walk.parseCommit(repo.resolve(hashID));
+                                                        // current commit (refactored)
+                                                        System.out.println("[DEBUG] Got right side of repo for hash "
+                                                                + hashID + " for repo '" + r.getName() + "'!");
+                                                        right = getCStat(repo, newCommit, rightFilePath, rightField,
+                                                                rightFieldStartLine, true);
+                                                        newCommit.disposeBody();
 
-                            //Get commit that is previous to the current one (in this case the original/left side)
-                            RevCommit oldCommit = null;
-                            try (RevWalk walkB = new RevWalk(repo)) {
-                                // Starting point
-                                walkB.markStart(newCommit);
-                                int count = 0;
-                                for (RevCommit rev : walkB) {
-                                    // got the previous commit.
-                                    if (count == 1) {
-                                        oldCommit = rev;
+                                                        if (!Objects.equals(left.getPackageName(), "") &&
+                                                                !Objects.equals(right.getPackageName(), "")) {
+                                                            statsList.add(new Object[]{
+                                                                    refactoringHash,
+                                                                    hashID,
+                                                                    r.getUrl() + ".git",
+                                                                    r.getId(),
+                                                                    refactoringName,
+                                                                    commitAuthor,
+                                                                    description,
+                                                                    commitDate,
+                                                                    dIntent,
+                                                                    rev.getName(),
+                                                                    leftFieldStartLine,
+                                                                    leftFieldEndLine,
+                                                                    leftFieldStartColumn,
+                                                                    leftFieldEndColumn,
+                                                                    leftFilePath,
+                                                                    leftDescription,
+                                                                    leftCodeElementType,
+                                                                    leftCodeElement,
+                                                                    left.getPackageName(),
+                                                                    left.getClassI().getName(),
+                                                                    left.getClassI().getFieldCount(),
+                                                                    left.getClassI().getMethodCount(),
+                                                                    left.getClassI().getAccess(),
+                                                                    left.getClassI().getIsAbstract(),
+                                                                    left.getClassI().getIsStatic(),
+                                                                    left.getClassI().getIsInnerClass(),
+                                                                    left.getClassI().getStartLine(),
+                                                                    left.getClassI().getEndLine(),
+                                                                    left.getFieldI().getName(),
+                                                                    left.getFieldI().getAccess(),
+                                                                    left.getFieldI().getIsAbstract(),
+                                                                    left.getFieldI().getIsStatic(),
+                                                                    left.getFieldI().getIsFinal(),
+                                                                    left.getFieldI().getStartLine(),
+                                                                    left.getFieldI().getEndLine(),
+                                                                    newCommit.getName(),
+                                                                    rightFieldStartLine,
+                                                                    rightFieldEndLine,
+                                                                    rightFieldStartColumn,
+                                                                    rightFieldEndColumn,
+                                                                    rightFilePath,
+                                                                    rightDescription,
+                                                                    rightCodeElementType,
+                                                                    rightCodeElement,
+                                                                    right.getPackageName(),
+                                                                    right.getClassI().getName(),
+                                                                    right.getClassI().getFieldCount(),
+                                                                    right.getClassI().getMethodCount(),
+                                                                    right.getClassI().getAccess(),
+                                                                    right.getClassI().getIsAbstract(),
+                                                                    right.getClassI().getIsStatic(),
+                                                                    right.getClassI().getIsInnerClass(),
+                                                                    right.getClassI().getStartLine(),
+                                                                    right.getClassI().getEndLine(),
+                                                                    right.getFieldI().getName(),
+                                                                    right.getFieldI().getAccess(),
+                                                                    right.getFieldI().getIsAbstract(),
+                                                                    right.getFieldI().getIsStatic(),
+                                                                    right.getFieldI().getIsFinal(),
+                                                                    right.getFieldI().getStartLine(),
+                                                                    right.getFieldI().getEndLine()
+                                                            });
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                                count++;
+                                            }
+                                            walkB.dispose();
+                                        }
+                                    } catch (AmbiguousObjectException e) {
+                                        System.out.println("[ERROR] AmbiguousObjectException: " + e);
+                                    } catch (IncorrectObjectTypeException e) {
+                                        System.out.println("[ERROR] IncorrectObjectTypeException: " + e);
+                                    } catch (MissingObjectException e) {
+                                        System.out.println("[ERROR] MissingObjectException: " + e);
+                                    } catch (IOException e) {
+                                        System.out.println("[ERROR] IOException: " + e);
                                     }
-                                    count++;
                                 }
-                                walkB.dispose();
+
+                                // close *this* right side
+                                rightSide.close();
+
+                                System.out.println("[DEBUG] Finished commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
+                            }catch(SQLException e){
+                                System.out.println("[ERROR] SQLException: "+e);
                             }
+                        }));
+                    }
 
-                            // previous commit (original)
-                            if(oldCommit!=null){
-                                System.out.println("[DEBUG] Got left side of repo for hash "+hashID+" for repo '"+r.getName()+"'!");
-                                left = getCStat(repo,oldCommit,leftFilePath,leftField,leftFieldStartLine,false);
-                                oldCommit.disposeBody();
-
-                                // current commit (refactored)
-                                System.out.println("[DEBUG] Got right side of repo for hash "+hashID+" for repo '"+r.getName()+
-                                        "'!");
-                                right = getCStat(repo,newCommit,rightFilePath,rightField,rightFieldStartLine,true);
-                                newCommit.disposeBody();
-
-                                if(!Objects.equals(left.getPackageName(), "")&&!Objects.equals(right.getPackageName(),
-                                        "")){
-                                    statsList.add(new Object[]{
-                                            refactoringHash,
-                                            hashID,
-                                            r.getUrl()+".git",
-                                            r.getId(),
-                                            refactoringName,
-                                            commitAuthor,
-                                            description,
-                                            commitDate,
-                                            dIntent,
-                                            oldCommit.getName(),
-                                            leftFieldStartLine,
-                                            leftFieldEndLine,
-                                            leftFieldStartColumn,
-                                            leftFieldEndColumn,
-                                            leftFilePath,
-                                            leftDescription,
-                                            leftCodeElementType,
-                                            leftCodeElement,
-                                            left.getPackageName(),
-                                            left.getClassI().getName(),
-                                            left.getClassI().getFieldCount(),
-                                            left.getClassI().getMethodCount(),
-                                            left.getClassI().getAccess(),
-                                            left.getClassI().getIsAbstract(),
-                                            left.getClassI().getIsStatic(),
-                                            left.getClassI().getIsInnerClass(),
-                                            left.getClassI().getStartLine(),
-                                            left.getClassI().getEndLine(),
-                                            left.getFieldI().getName(),
-                                            left.getFieldI().getAccess(),
-                                            left.getFieldI().getIsAbstract(),
-                                            left.getFieldI().getIsStatic(),
-                                            left.getFieldI().getIsFinal(),
-                                            left.getFieldI().getStartLine(),
-                                            left.getFieldI().getEndLine(),
-                                            newCommit.getName(),
-                                            rightFieldStartLine,
-                                            rightFieldEndLine,
-                                            rightFieldStartColumn,
-                                            rightFieldEndColumn,
-                                            rightFilePath,
-                                            rightDescription,
-                                            rightCodeElementType,
-                                            rightCodeElement,
-                                            right.getPackageName(),
-                                            right.getClassI().getName(),
-                                            right.getClassI().getFieldCount(),
-                                            right.getClassI().getMethodCount(),
-                                            right.getClassI().getAccess(),
-                                            right.getClassI().getIsAbstract(),
-                                            right.getClassI().getIsStatic(),
-                                            right.getClassI().getIsInnerClass(),
-                                            right.getClassI().getStartLine(),
-                                            right.getClassI().getEndLine(),
-                                            right.getFieldI().getName(),
-                                            right.getFieldI().getAccess(),
-                                            right.getFieldI().getIsAbstract(),
-                                            right.getFieldI().getIsStatic(),
-                                            right.getFieldI().getIsFinal(),
-                                            right.getFieldI().getStartLine(),
-                                            right.getFieldI().getEndLine()
-                                    });
-                                }
+                    // Wait for all commits for this repository to be done before we close the repo
+                    for(Future fut : commitRuns){
+                        try {
+                            Object commit = fut.get();
+                            if (commit!=null){
+                                System.out.println("[ERROR] Error with thread, no return! (classStatistics [GitChanges.java])");
                             }
-                        } catch (AmbiguousObjectException e) {
-                            System.out.println("[ERROR] AmbiguousObjectException: "+e);
-                        } catch (IncorrectObjectTypeException e) {
-                            System.out.println("[ERROR] IncorrectObjectTypeException: "+e);
-                        } catch (MissingObjectException e) {
-                            System.out.println("[ERROR] MissingObjectException: "+e);
-                        } catch (IOException e) {
-                            System.out.println("[ERROR] IOException: "+e);
+                        }catch (Exception e) {
+                            System.out.println("[ERROR] Thread Future: "+e+" (classStatistics [GitChanges.java])");
                         }
-
-                        // close *this* right side
-                        rightSide.close();
-
-                        System.out.println("[DEBUG] Finished commit analysis on "+hashID+" for repo '"+r.getName()+"'!");
-                    }catch(SQLException e){
-                        System.out.println("[ERROR] SQLException: "+e);
                     }
-                }));
-            }
 
-            // Wait for all commits for this repository to be done before we close the repo
-            for(Future fut : commitRuns){
-                try {
-                    Object commit = fut.get();
-                    if (commit!=null){
-                        System.out.println("[ERROR] Error with thread, no return! (classStatistics [GitChanges.java])");
+                    // close the git repo
+                    git.close();
+                    commitRuns.clear();
+                    System.out.println("[DEBUG] Closed repo '"+r.getName()+"' via git!");
+
+                    // and delete the repo
+                    try {
+                        FileUtils.deleteDirectory(new File(dir));
+                        System.out.println("[DEBUG] Deleted repo '"+r.getName()+"' local directory!");
+                    } catch (IOException e) {
+                        System.out.println("[ERROR] " + e);
                     }
-                }catch (Exception e) {
-                    System.out.println("[ERROR] Thread Future: "+e+" (classStatistics [GitChanges.java])");
+
+                    // close this repo's left resultset
+                    leftSide.close();
+
+                    // add the stats to the database
+                    dbExecutor.submit(() -> {
+                        Database dba=new Manager().access();
+                        System.out.println("[INFO] Start repository stats to db: "+r.getName()+" with "+statsList.size()+" " +
+                                "entries.");
+                        dba.insert("info", statsList, new Object[]{"refactorHash", "refactorCommit", "repositoryId",
+                                "refactoringName"});
+                        dba.close();
+                        statsList.clear();
+                        System.out.println("[INFO] Finished repository stats to db: "+r.getName());
+                    });
+                } catch (GitAPIException e) {
+                    System.out.println("[ERROR] GitAPIException: "+e);
                 }
             }
-
-            // close the git repo
-            git.close();
-            commitRuns.clear();
-            System.out.println("[DEBUG] Closed repo '"+r.getName()+"' via git!");
-
-            // and delete the repo
-            try {
-                FileUtils.deleteDirectory(new File(dir));
-                System.out.println("[DEBUG] Deleted repo '"+r.getName()+"' local directory!");
-            } catch (IOException e) {
-                System.out.println("[ERROR] " + e);
-            }
-
-            // close this repo's left resultset
-            leftSide.close();
-
-            // add the stats to the database
-            dbExecutor.submit(() -> {
-                Database dba=new Manager().access();
-                System.out.println("[INFO] Start repository stats to db: "+r.getName()+" with "+statsList.size()+" " +
-                        "entries.");
-                dba.insert("info", statsList, new Object[]{"refactorHash", "refactorCommit", "repositoryId",
-                        "refactoringName"});
-                dba.close();
-                System.out.println("[INFO] Finished repository stats to db: "+r.getName());
-            });
-        } catch (GitAPIException e) {
-            System.out.println("[ERROR] GitAPIException: "+e);
-        } catch (SQLException e) {
+            repoA.close();
+        }catch (SQLException e) {
             System.out.println("[ERROR] SQLException: "+e);
         }
-        System.out.println("[DEBUG] End '"+r.getName()+"' analysis task!");
+        System.out.println("[DEBUG] ["+count+"/"+totalRepos+"] End '"+r.getName()+"' analysis task!");
     }
 
     private MoveAttributeInfo getCStat(Repository repo,RevCommit commit,String filePath,String field,
@@ -350,19 +352,24 @@ public class GitChanges {
 
             // class, field and package info
             AtomicReference<String> packageName = new AtomicReference<>("");
+            List<String> outerClasses = new ArrayList<>();
             AtomicReference<String> fieldAccess = new AtomicReference<>("");
             AtomicReference<Boolean> isStaticField = new AtomicReference<>(false);
             AtomicReference<Boolean> isAbstractField = new AtomicReference<>(false);
             AtomicReference<Boolean> isFinalField = new AtomicReference<>(false);
 
             // set class access type
-            String classAccess;
+            String classAccess = "";
             if(f.isPublic()){
                 classAccess="public";
             }else if(f.isPrivate()){
                 classAccess="private";
-            }else{
+            }else if(f.isProtected()){
                 classAccess="protected";
+            }
+
+            for (ClassOrInterfaceType extendedClass : f.getExtendedTypes()) {
+                outerClasses.add(extendedClass.getNameAsString());
             }
 
             // set the package name
@@ -391,7 +398,7 @@ public class GitChanges {
             // return MoveAttributeInfo with all the info
             return new MoveAttributeInfo(refactored,packageName.get(),
                     f.getNameAsString(), classAccess, f.isAbstract(), f.isStatic(), f.isInnerClass(),
-                    getRClass.begin.line, getRClass.end.line, f.getFields().size(),
+                    outerClasses,getRClass.begin.line, getRClass.end.line, f.getFields().size(),
                     f.getMethods().size(),field,fieldAccess.get(), isAbstractField.get(),
                     isStaticField.get(), isFinalField.get(), getRField.begin.line, getRField.end.line);
         }
@@ -419,19 +426,5 @@ public class GitChanges {
             System.out.println("[ERROR] IOException: "+e);
         }
         return "";
-    }
-
-    private void printStats(MoveAttributeInfo info,String commit,String side,String path){
-        // print some stats
-        System.out.println(" -- ");
-        System.out.println("[SIDE] "+side);
-        System.out.println("[COMMIT] "+commit);
-        System.out.println("[PACKAGE] "+info.getPackageName());
-        System.out.println("[CLASS] "+info.getClassI().getName());
-        System.out.println("[CLASS ACCESS] "+info.getClassI().getAccess());
-        System.out.println("[FILE PATH] "+path);
-        System.out.println("[REFACTORED FIELD] "+info.getFieldI().getName());
-        System.out.println("[FIELD ACCESS] "+info.getFieldI().getAccess());
-        System.out.println(" -- \n");
     }
 }
