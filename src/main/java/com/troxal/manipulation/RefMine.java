@@ -3,6 +3,10 @@ package com.troxal.manipulation;
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
 import com.troxal.pojo.RepoInfo;
+import gr.uom.java.xmi.UMLModel;
+import gr.uom.java.xmi.diff.CodeRange;
+import gr.uom.java.xmi.diff.MoveSourceFolderRefactoring;
+import gr.uom.java.xmi.diff.UMLModelDiff;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -15,13 +19,17 @@ import org.refactoringminer.util.GitServiceImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.*;
 
 public class RefMine implements Runnable, Serializable {
     private RepoInfo repo;
@@ -116,10 +124,117 @@ public class RefMine implements Runnable, Serializable {
                     }
                 }else{
                     try {
-                        commitRuns.add(service.submit(new Refactorings(id, gitURI, gitService, repository, handler,
-                                currentCommit,db)));
+                        commitRuns.add(service.submit(() -> {
+                                    try{
+                                        List<Refactoring> refactoringsAtRevision;
+                                        String commitId = currentCommit.getId().getName();
+                                        Set<String> filePathsBefore = new LinkedHashSet<String>();
+                                        Set<String> filePathsCurrent = new LinkedHashSet<String>();
+                                        Map<String, String> renamedFilesHint = new HashMap<>();
+                                        gitService.fileTreeDiff(repository, currentCommit, filePathsBefore,
+                                                                filePathsCurrent, renamedFilesHint);
+                                        Set<String> repositoryDirectoriesBefore = new LinkedHashSet<String>();
+                                        Set<String> repositoryDirectoriesCurrent = new LinkedHashSet<String>();
+                                        Map<String, String> fileContentsBefore = new LinkedHashMap<String, String>();
+                                        Map<String, String> fileContentsCurrent = new LinkedHashMap<String, String>();
+
+                                        if (!filePathsBefore.isEmpty() && !filePathsCurrent.isEmpty()
+                                                && currentCommit.getParentCount() > 0) {
+                                            RevCommit parentCommit = currentCommit.getParent(0);
+                                            populateFileContents(repository, parentCommit, filePathsBefore,
+                                                    fileContentsBefore, repositoryDirectoriesBefore);
+                                            populateFileContents(repository, currentCommit, filePathsCurrent,
+                                                    fileContentsCurrent, repositoryDirectoriesCurrent);
+                                            List<MoveSourceFolderRefactoring> moveSourceFolderRefactorings =
+                                                    processIdenticalFiles(fileContentsBefore, fileContentsCurrent,
+                                                            renamedFilesHint);
+                                            UMLModel parentUMLModel = createModel(fileContentsBefore,
+                                                    repositoryDirectoriesBefore);
+                                            UMLModel currentUMLModel = createModel(fileContentsCurrent,
+                                                    repositoryDirectoriesCurrent);
+
+                                            UMLModelDiff modelDiff = parentUMLModel.diff(currentUMLModel);
+                                            refactoringsAtRevision = modelDiff.getRefactorings();
+                                            refactoringsAtRevision.addAll(moveSourceFolderRefactorings);
+                                            moveSourceFolderRefactorings.clear();
+                                        } else {
+                                            refactoringsAtRevision = Collections.emptyList();
+                                        }
+
+                                        List<Object[]> rList = new ArrayList<>();
+                                        for(Refactoring refactoring : refactoringsAtRevision) {
+                                            System.out.println("[DEBUG] Detected "+id+"'s commit "+commitId+
+                                                    " refactored "+refactoring.getName());
+                                            String md5 = getMD5(refactoring.toJSON());
+
+                                            if(!refactoring.leftSide().isEmpty()&&!refactoring.rightSide().isEmpty()){
+                                                CodeRange ls = refactoring.leftSide().get(0);
+                                                CodeRange rs = refactoring.leftSide().get(0);
+
+                                                rList.add(new Object[]{
+                                                        md5,
+                                                        commitId,
+                                                        gitURI,
+                                                        id,
+                                                        refactoring.getName(),
+                                                        ls.getStartLine(),
+                                                        ls.getEndLine(),
+                                                        ls.getStartColumn(),
+                                                        ls.getEndColumn(),
+                                                        ls.getFilePath(),
+                                                        ls.getCodeElementType().toString(),
+                                                        ls.getDescription(),
+                                                        ls.getCodeElement(),
+                                                        rs.getStartLine(),
+                                                        rs.getEndLine(),
+                                                        rs.getStartColumn(),
+                                                        rs.getEndColumn(),
+                                                        rs.getFilePath(),
+                                                        rs.getCodeElementType().toString(),
+                                                        rs.getDescription(),
+                                                        rs.getCodeElement(),
+                                                        currentCommit.getAuthorIdent().getName(),
+                                                        currentCommit.getFullMessage(),
+                                                        LocalDateTime.ofInstant(
+                                                                currentCommit.getAuthorIdent().getWhenAsInstant(),
+                                                                currentCommit.getAuthorIdent().getTimeZone().toZoneId()
+                                                        )
+                                                });
+                                            }
+                                        }
+
+                                        db.insert("Refactorings",rList,new Object[]{
+                                                "refactoringhash", "commit", "repositoryid"}
+                                        );
+
+                                        if(db.insert("CommitStatus",new Object[]{commitId,1}))
+                                            System.out.println("[INFO] Added commit status for repo "+id+
+                                                    ": "+commitId);
+                                        else
+                                            System.out.println("[ERROR] Failed to add commit status: "+id+
+                                                    "call (RefMine.java)");
+
+                                        // garbage collection
+                                        refactoringsAtRevision.clear();
+                                        filePathsBefore.clear();
+                                        fileContentsCurrent.clear();
+                                        renamedFilesHint.clear();
+                                        rList.clear();
+                                        repositoryDirectoriesBefore.clear();
+                                        repositoryDirectoriesCurrent.clear();
+                                        fileContentsBefore.clear();
+                                        fileContentsCurrent.clear();
+
+                                        return true;
+                                    } catch (Exception e) {
+                                        System.out.println("[ERROR] "+id+": " +e+" (call [RefMine.java])");
+                                        return false;
+                                    }
+                                }
+                        ));
                     } catch (Exception e) {
-                        System.out.println(String.format("[ERROR] Ignored revision %s due to error %s", currentCommit.getId().getName(),e));
+                        System.out.println(String.format("[ERROR] Ignored revision %s due to error %s",
+                                currentCommit.getId().getName(),e));
                         handler.handleException(currentCommit.getId().getName(),e);
                     }
                 }
@@ -158,5 +273,24 @@ public class RefMine implements Runnable, Serializable {
             walk.dispose();
         }
         walk.close();
+    }
+
+    public String getMD5(String input)
+    {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] messageDigest = md.digest(input.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
+        }
+
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
