@@ -8,6 +8,8 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/*
+.idea
 *.iws
 *.iml
 *.ipr
@@ -48,3 +50,4 @@ config/.env
 config/application_default_credentials.json
 RepoGrabber.jar
 .idea/misc.xml
+
