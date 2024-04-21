@@ -15,7 +15,6 @@ import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
 import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.util.GitServiceImpl;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,8 +33,7 @@ import static org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl.*;
 public class RefMine implements Runnable, Serializable {
     private RepoInfo repo;
     private String branchName = null;
-    private ExecutorService service = null;
-    private Integer totalCommits = 0;
+    private ExecutorService service;
     List<Future> commitRuns = new ArrayList<>();
 
     public RefMine(RepoInfo repo, Boolean runAllBranches, ExecutorService service){
@@ -54,8 +52,6 @@ public class RefMine implements Runnable, Serializable {
             System.out.println("[INFO] ** RefMiner success on "+dir);
         }else
             System.out.println("[ERROR] ** RefMiner failed on "+dir+" (run [RefMine.java])");
-
-        //Runtime.getRuntime().gc();
     }
 
     private Boolean runRef(RepoInfo r, String dir, String branchName){
@@ -108,9 +104,8 @@ public class RefMine implements Runnable, Serializable {
         String projectName = projectFolder.getName();
 
         while (i.hasNext()) {
-            totalCommits++;
             RevCommit currentCommit = i.next();
-            Integer commitStatus = 0;
+            Integer commitStatus;
             try {
                 ResultSet cStatus = db.select("CommitStatus",new String[]{"status"},"id = ?",
                         new Object[]{currentCommit.getId().getName()});
