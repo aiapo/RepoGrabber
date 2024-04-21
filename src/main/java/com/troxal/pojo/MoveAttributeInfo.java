@@ -1,16 +1,19 @@
 package com.troxal.pojo;
 
 import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MoveAttributeInfo {
     public MoveAttributeInfo(Boolean refactored, String packageName, String className, String classAccess,
                              Boolean classIsAbstract, Boolean classIsStatic, Boolean classIsInner,
-                             Integer classStartLine, Integer classEndLine, Integer classFieldCount,
-                             Integer classMethodCount, String fieldName, String fieldAccess, Boolean fieldIsAbstract,
-                             Boolean fieldIsStatic, Boolean fieldIsFinal, Integer fieldStartLine, Integer fieldEndLine){
+                             List<String> outerClasses, Integer classStartLine, Integer classEndLine,
+                             Integer classFieldCount, Integer classMethodCount, String fieldName, String fieldAccess,
+                             Boolean fieldIsAbstract, Boolean fieldIsStatic, Boolean fieldIsFinal,
+                             Integer fieldStartLine, Integer fieldEndLine){
         this.refactored = refactored;
         this.packageName = packageName;
-        this.ClassI = new ClassInfo(className, classAccess, classIsAbstract, classIsStatic, classIsInner,
+        this.ClassI = new ClassInfo(className, classAccess, classIsAbstract, classIsStatic, classIsInner, outerClasses,
                 classStartLine, classEndLine, classFieldCount, classMethodCount);
         this.FieldI = new FieldInfo(fieldName, fieldAccess, fieldIsAbstract, fieldIsStatic, fieldIsFinal,
                 fieldStartLine, fieldEndLine);
@@ -34,12 +37,14 @@ public class MoveAttributeInfo {
 
     public class ClassInfo {
         public ClassInfo(String name, String access, Boolean isAbstract, Boolean isStatic, Boolean isInnerClass,
+                         List<String> outerClasses,
                          Integer startLine, Integer endLine, Integer fieldCount, Integer methodCount){
             this.name = name;
             this.access = access;
             this.isAbstract = isAbstract;
             this.isStatic = isStatic;
             this.isInnerClass = isInnerClass;
+            this.outerClasses = outerClasses;
             this.startLine = startLine;
             this.endLine = endLine;
             this.fieldCount = fieldCount;
@@ -54,6 +59,9 @@ public class MoveAttributeInfo {
 
         @Getter
         private String access = "";
+
+        @Getter
+        private List<String> outerClasses = new ArrayList<>();
 
         @Getter
         private Boolean isAbstract = false;

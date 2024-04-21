@@ -1,11 +1,10 @@
 package com.troxal.manipulation;
 
-import com.github.javaparser.Range;
-import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.troxal.RepoGrab;
 import com.troxal.database.Database;
@@ -36,8 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GitChanges {
     ExecutorService dbExecutor = Executors.newFixedThreadPool(30);
-    ExecutorService reposExecutor = Executors.newFixedThreadPool(12);
-    ExecutorService commitExecutor = Executors.newFixedThreadPool(50);
+    ExecutorService reposExecutor = Executors.newFixedThreadPool(3);
+    ExecutorService commitExecutor = Executors.newFixedThreadPool(12);
     private Database db;
     private Integer count = 0;
     private Integer totalRepos = 0;
@@ -166,19 +165,34 @@ public class GitChanges {
                                                     if(rev!=null){
                                                         System.out.println("[DEBUG] Got left side of repo for hash "
                                                                 + hashID + " for repo '" + r.getName() + "'!");
-                                                        left = getCStat(repo, rev, leftFilePath, leftField,
+                                                        left = MoveAttribute(repo, rev, leftFilePath, leftField,
                                                                 leftFieldStartLine, false);
                                                         rev.disposeBody();
 
                                                         // current commit (refactored)
                                                         System.out.println("[DEBUG] Got right side of repo for hash "
                                                                 + hashID + " for repo '" + r.getName() + "'!");
-                                                        right = getCStat(repo, newCommit, rightFilePath, rightField,
+                                                        right = MoveAttribute(repo, newCommit, rightFilePath, rightField,
                                                                 rightFieldStartLine, true);
                                                         newCommit.disposeBody();
 
+                                                        // packages can't be empty
                                                         if (!Objects.equals(left.getPackageName(), "") &&
                                                                 !Objects.equals(right.getPackageName(), "")) {
+
+                                                            String leftExtendedClass = "";
+                                                            if(!left.getClassI().getOuterClasses().isEmpty()){
+                                                                leftExtendedClass =
+                                                                        left.getClassI().getOuterClasses().get(0);
+                                                            }
+
+                                                            String rightExtendedClass = "";
+                                                            if(!right.getClassI().getOuterClasses().isEmpty()){
+                                                                rightExtendedClass =
+                                                                        right.getClassI().getOuterClasses().get(0);
+                                                            }
+
+                                                            // add to list so everything gets added at once
                                                             statsList.add(new Object[]{
                                                                     refactoringHash,
                                                                     hashID,
@@ -200,6 +214,7 @@ public class GitChanges {
                                                                     leftCodeElement,
                                                                     left.getPackageName(),
                                                                     left.getClassI().getName(),
+                                                                    leftExtendedClass,
                                                                     left.getClassI().getFieldCount(),
                                                                     left.getClassI().getMethodCount(),
                                                                     left.getClassI().getAccess(),
@@ -226,6 +241,7 @@ public class GitChanges {
                                                                     rightCodeElement,
                                                                     right.getPackageName(),
                                                                     right.getClassI().getName(),
+                                                                    rightExtendedClass,
                                                                     right.getClassI().getFieldCount(),
                                                                     right.getClassI().getMethodCount(),
                                                                     right.getClassI().getAccess(),
@@ -250,6 +266,8 @@ public class GitChanges {
                                             }
                                             walkB.dispose();
                                         }
+
+                                        walk.dispose();
                                     } catch (AmbiguousObjectException e) {
                                         System.out.println("[ERROR] AmbiguousObjectException: " + e);
                                     } catch (IncorrectObjectTypeException e) {
@@ -260,7 +278,6 @@ public class GitChanges {
                                         System.out.println("[ERROR] IOException: " + e);
                                     }
                                 }
-
                                 // close *this* right side
                                 rightSide.close();
 
@@ -280,6 +297,10 @@ public class GitChanges {
                             }
                         }catch (Exception e) {
                             System.out.println("[ERROR] Thread Future: "+e+" (classStatistics [GitChanges.java])");
+
+                            if(e.getMessage().equals("java.util.concurrent.ExecutionException: java.lang.OutOfMemoryError: Java heap space")){
+                                break;
+                            }
                         }
                     }
 
@@ -304,7 +325,7 @@ public class GitChanges {
                         Database dba=new Manager().access();
                         System.out.println("[INFO] Start repository stats to db: "+r.getName()+" with "+statsList.size()+" " +
                                 "entries.");
-                        dba.insert("info", statsList, new Object[]{"refactorHash", "refactorCommit", "repositoryId",
+                        dba.insert("moveattribute", statsList, new Object[]{"refactorHash", "refactorCommit", "repositoryId",
                                 "refactoringName"});
                         dba.close();
                         statsList.clear();
@@ -315,100 +336,116 @@ public class GitChanges {
                 }
             }
             repoA.close();
+            Runtime.getRuntime().gc();
         }catch (SQLException e) {
             System.out.println("[ERROR] SQLException: "+e);
         }
+        Runtime.getRuntime().gc();
         System.out.println("[DEBUG] ["+count+"/"+totalRepos+"] End '"+r.getName()+"' analysis task!");
     }
 
-    private MoveAttributeInfo getCStat(Repository repo,RevCommit commit,String filePath,String field,
-                                       Integer startLine,Boolean refactored){
+    public MoveAttributeInfo MoveAttribute(Repository repo, RevCommit commit, String filePath, String field,
+                                                  Integer startLine, Boolean refactored){
+        ParserConfiguration configuration = new ParserConfiguration();
+        JavaParser parser = new JavaParser(configuration);
+
         // get the java file and use javaparser to parse it
-        String javaFile = getFileAtCommit(repo,commit,filePath);
-        CompilationUnit compilationUnit = StaticJavaParser.parse(javaFile);
+        ParseResult cuPR = parser.parse(getFileAtCommit(repo,commit,filePath));
 
-        // go through all the classes in a java file continue only if we have a match with our looked for field
-        Optional<ClassOrInterfaceDeclaration> result = compilationUnit
-                // find all classes
-                .findAll(ClassOrInterfaceDeclaration.class)
-                .stream()
-                // filter to only get classes that have the field at its specific location
-                .filter(f -> f.getFieldByName(field).isPresent()
-                        && f.getFieldByName(field).get().getRange().get().begin.line==startLine)
-                // just get one (theoretically there should only be one anyway)
-                .findFirst();
+        // check if the parse was successful
+        if(cuPR.isSuccessful()){
+            // check if the result exists
+            if(cuPR.getResult().isPresent()){
+                // if it does get our compilationUnit
+                CompilationUnit compilationUnit = (CompilationUnit) cuPR.getResult().get();
 
-        // just a double check if we have a match
-        if(result.isPresent()){
-            // we know we got it so GET it
-            ClassOrInterfaceDeclaration f = result.get();
+                // go through all the classes in a java file continue only if we have a match with our looked for field
+                Optional<ClassOrInterfaceDeclaration> result = compilationUnit
+                        // find all classes
+                        .findAll(ClassOrInterfaceDeclaration.class)
+                        .stream()
+                        // filter to only get classes that have the field at its specific location
+                        .filter(f -> f.getFieldByName(field).isPresent()
+                                && f.getFieldByName(field).get().getRange().get().begin.line==startLine)
+                        // just get one (theoretically there should only be one anyway)
+                        .findFirst();
 
-            // get the field
-            FieldDeclaration fieldI = f.getFieldByName(field).get();
+                // just a double check if we have a match
+                if(result.isPresent()){
+                    // we know we got it so GET it
+                    ClassOrInterfaceDeclaration f = result.get();
 
-            // get the ranges of the class and field
-            Range getRField = fieldI.getRange().get();
-            Range getRClass = f.getRange().get();
+                    // get the field
+                    FieldDeclaration fieldI = f.getFieldByName(field).get();
 
-            // class, field and package info
-            AtomicReference<String> packageName = new AtomicReference<>("");
-            List<String> outerClasses = new ArrayList<>();
-            AtomicReference<String> fieldAccess = new AtomicReference<>("");
-            AtomicReference<Boolean> isStaticField = new AtomicReference<>(false);
-            AtomicReference<Boolean> isAbstractField = new AtomicReference<>(false);
-            AtomicReference<Boolean> isFinalField = new AtomicReference<>(false);
+                    // get the ranges of the class and field
+                    Range getRField = fieldI.getRange().get();
+                    Range getRClass = f.getRange().get();
 
-            // set class access type
-            String classAccess = "";
-            if(f.isPublic()){
-                classAccess="public";
-            }else if(f.isPrivate()){
-                classAccess="private";
-            }else if(f.isProtected()){
-                classAccess="protected";
-            }
+                    // class, field and package info
+                    AtomicReference<String> packageName = new AtomicReference<>("");
+                    List<String> outerClasses = new ArrayList<>();
+                    AtomicReference<String> fieldAccess = new AtomicReference<>("");
+                    AtomicReference<Boolean> isStaticField = new AtomicReference<>(false);
+                    AtomicReference<Boolean> isAbstractField = new AtomicReference<>(false);
+                    AtomicReference<Boolean> isFinalField = new AtomicReference<>(false);
 
-            for (ClassOrInterfaceType extendedClass : f.getExtendedTypes()) {
-                outerClasses.add(extendedClass.getNameAsString());
-            }
+                    // set class access type
+                    String classAccess = "";
+                    if(f.isPublic()){
+                        classAccess="public";
+                    }else if(f.isPrivate()){
+                        classAccess="private";
+                    }else if(f.isProtected()){
+                        classAccess="protected";
+                    }
 
-            // set the package name
-            compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
-                packageName.set(packageDeclaration.getNameAsString());
-            });
+                    for (ClassOrInterfaceType extendedClass : f.getExtendedTypes()) {
+                        outerClasses.add(extendedClass.getNameAsString());
+                    }
 
-            // get the extra modifiers for the field
-            fieldI.getModifiers().forEach(fieldModifier -> {
-                String modifierKeyword = fieldModifier.getKeyword().asString();
-                if(Objects.equals(modifierKeyword, "public") ||
-                        Objects.equals(modifierKeyword, "private") ||
-                        Objects.equals(modifierKeyword, "protected")){
-                    fieldAccess.set(modifierKeyword);
-                }else if(Objects.equals(modifierKeyword,"static")){
-                    isStaticField.set(true);
-                }else if(Objects.equals(modifierKeyword,"abstract")){
-                    isAbstractField.set(true);
-                }else if(Objects.equals(modifierKeyword,"final")){
-                    isFinalField.set(true);
-                }else{
-                    System.out.println(modifierKeyword);
+                    // set the package name
+                    compilationUnit.getPackageDeclaration().ifPresent(packageDeclaration -> {
+                        packageName.set(packageDeclaration.getNameAsString());
+                    });
+
+                    // get the extra modifiers for the field
+                    fieldI.getModifiers().forEach(fieldModifier -> {
+                        String modifierKeyword = fieldModifier.getKeyword().asString();
+                        if(Objects.equals(modifierKeyword, "public") ||
+                                Objects.equals(modifierKeyword, "private") ||
+                                Objects.equals(modifierKeyword, "protected")){
+                            fieldAccess.set(modifierKeyword);
+                        }else if(Objects.equals(modifierKeyword,"static")){
+                            isStaticField.set(true);
+                        }else if(Objects.equals(modifierKeyword,"abstract")){
+                            isAbstractField.set(true);
+                        }else if(Objects.equals(modifierKeyword,"final")){
+                            isFinalField.set(true);
+                        }else{
+                            System.out.println(modifierKeyword);
+                        }
+                    });
+
+                    // return MoveAttributeInfo with all the info
+                    return new MoveAttributeInfo(refactored,packageName.get(),
+                            f.getNameAsString(), classAccess, f.isAbstract(), f.isStatic(), f.isInnerClass(),
+                            outerClasses,getRClass.begin.line, getRClass.end.line, f.getFields().size(),
+                            f.getMethods().size(),field,fieldAccess.get(), isAbstractField.get(),
+                            isStaticField.get(), isFinalField.get(), getRField.begin.line, getRField.end.line);
                 }
-            });
-
-            // return MoveAttributeInfo with all the info
-            return new MoveAttributeInfo(refactored,packageName.get(),
-                    f.getNameAsString(), classAccess, f.isAbstract(), f.isStatic(), f.isInnerClass(),
-                    outerClasses,getRClass.begin.line, getRClass.end.line, f.getFields().size(),
-                    f.getMethods().size(),field,fieldAccess.get(), isAbstractField.get(),
-                    isStaticField.get(), isFinalField.get(), getRField.begin.line, getRField.end.line);
+            }else{
+                System.out.println("[ERROR] JavaParser says there's no CU for: "+commit.getName());
+            }
+        }else{
+            System.out.println("[ERROR] Error with parsing: "+commit.getName());
         }
 
         // otherwise return just the default MoveAttributeInfo
         return new MoveAttributeInfo();
     }
 
-
-    private String getFileAtCommit(Repository repo,RevCommit commit,String filePath){
+    private String getFileAtCommit(Repository repo, RevCommit commit, String filePath){
         try {
             // get the tree of the commit
             RevTree tree = commit.getTree();
@@ -419,8 +456,7 @@ public class GitChanges {
             // if file exists
             if (treewalk != null) {
                 // use the blob id to read the file's data
-                byte[] data = repo.open(treewalk.getObjectId(0)).getBytes();
-                return new String(data, "utf-8");
+                return new String(repo.open(treewalk.getObjectId(0)).getBytes(), "utf-8");
             }
         } catch (IOException e) {
             System.out.println("[ERROR] IOException: "+e);
