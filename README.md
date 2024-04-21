@@ -48,6 +48,7 @@ might be in the future/based on different queries.*
   * Default branch name
 * Integration with RefMiner to show output all refactorings to Database
   * Multithreaded implementation
+  * Get commit information (message, date, author)
 * Output to CSV
 * Import from CSV, skip new query (that RepoGrab made previously)
 * Run using Docker
