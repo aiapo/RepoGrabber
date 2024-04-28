@@ -2,9 +2,13 @@ package com.troxal.manipulation;
 
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
+import com.troxal.pojo.LanguageInfo;
 import com.troxal.pojo.RepoInfo;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -15,9 +19,10 @@ import java.util.zip.GZIPOutputStream;
 public class RGDS {
     String comment = "\n% ";
     String RGDS_Version = "1.0.0";
-    Database db = new Manager().access();
+    Database db;
 
     public RGDS(){
+        db = new Manager().access();
     }
 
     private byte[] createHeader(String title, String description){
@@ -121,9 +126,8 @@ public class RGDS {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("[ERROR] SQL Exception: "+e+" (detect [RefMine.java])");
+            System.out.println("[ERROR] SQL Exception: "+e+" (getFromDB [RGDS.java])");
         }
-        db.close();
 
         try{
             gos.write("\n".getBytes());
@@ -209,7 +213,7 @@ public class RGDS {
             try (GZIPOutputStream gos = new GZIPOutputStream(new FileOutputStream(file))){
                 gos.write(header);
                 for(Map.Entry<String,String[]> relation : relations.entrySet()){
-                    gos.write(createRelation("Repositories",relation.getValue()));
+                    gos.write(createRelation(relation.getKey(),relation.getValue()));
                     getFromDB(gos,relation);
                 }
                 return true;
@@ -225,48 +229,117 @@ public class RGDS {
     public List<RepoInfo> read(Boolean compressed, String fileName){
         List<RepoInfo> repos = new ArrayList<>();
 
-        Map<String,Integer> validAction = new HashMap<>();
-        validAction.put("rgds_version",1);
-        validAction.put("title",1);
-        validAction.put("relation",1);
-        validAction.put("attribute",2);
-        validAction.put("data",0);
+        try{
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            Map<String,Integer> validAction = new HashMap<>();
+            validAction.put("rgds_version",1);
+            validAction.put("title",1);
+            validAction.put("relation",1);
+            validAction.put("attribute",2);
+            validAction.put("data",0);
 
-        if(compressed){
-            try(InputStream fileStream = new FileInputStream("results/"+fileName+".rgds")){
-                try(InputStream gzipStream = new GZIPInputStream(fileStream)){
-                    Reader decoder = new InputStreamReader(gzipStream);
-                    BufferedReader buffered = new BufferedReader(decoder);
+            if(compressed){
+                try(InputStream fileStream = new FileInputStream("results/"+fileName+".rgds")){
+                    try(InputStream gzipStream = new GZIPInputStream(fileStream)){
+                        new DigestInputStream(gzipStream, md);
+                        Reader decoder = new InputStreamReader(gzipStream);
+                        BufferedReader buffered = new BufferedReader(decoder);
 
-                    String currentAction = "";
+                        String hashtext = new BigInteger(1, md.digest()).toString(16);
+                        while (hashtext.length() < 32) {
+                            hashtext = "0" + hashtext;
+                        }
+                        System.out.println("[DEBUG] This RGDS hash is: "+hashtext);
 
-                    while (buffered.ready()) {
-                        String currentLine = buffered.readLine();
-                        if(!currentLine.startsWith("%"))
-                            if(currentLine.startsWith("@")){
-                                String[] currentActionFull = currentLine.substring(1).split(" (?=(?:[^\"]*\"[^\"]*\")" +
-                                        "*[^\"]*$)", -1);;
-                                currentAction = currentActionFull[0].toLowerCase();
-                                if(validAction.containsKey(currentAction)){
-                                    if(validAction.get(currentAction)==currentActionFull.length-1){
-                                        System.out.println("The @Action \""+currentAction+"\" has the correct number " +
-                                                "of parameters at "+validAction.get(currentAction));
-                                    }else
-                                        System.out.println("[ERROR] Invalid number of parameters for @Action " +
-                                                "\""+currentAction+"\" in RGDS file, ignoring... :: "+
-                                                Arrays.toString(currentActionFull));
-                                }else
-                                    System.out.println("[ERROR] Invalid @Action in RGDS file, ignoring...");
+                        String currentRelation = "";
+                        Boolean startDataRead = false;
 
+                        while (buffered.ready()) {
+                            String currentLine = buffered.readLine();
+                            if(!currentLine.equalsIgnoreCase("")){
+                                if(!currentLine.startsWith("%")){
+                                    if(currentLine.startsWith("@")){
+                                        String[] currentActionFull = currentLine.substring(1)
+                                                .split(" (?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                                        String currentAction = currentActionFull[0].toLowerCase();
+                                        if(validAction.containsKey(currentAction)){
+                                            if(validAction.get(currentAction)==currentActionFull.length-1){
+                                                startDataRead=false;
+                                                if(currentAction.equalsIgnoreCase("relation")){
+                                                    currentRelation = currentActionFull[1];
+                                                    System.out.println("[DEBUG] Switch currentRelation to "+currentRelation);
+                                                }else if(currentAction.equalsIgnoreCase("data")){
+                                                    startDataRead=true;
+                                                }
+                                            }else
+                                                System.out.println("[ERROR] Invalid number of parameters for @Action " +
+                                                        "\""+currentAction+"\" in RGDS file, ignoring... :: "+
+                                                        Arrays.toString(currentActionFull));
+                                        }else
+                                            System.out.println("[ERROR] Invalid @Action in RGDS file, ignoring...");
+                                    }else if(startDataRead){
+                                        List<LanguageInfo> tempLanguages = new ArrayList<>();
+                                        String[] currentDataLine = currentLine.split("\",\"", -1);
+
+                                        for(int i=0;i<currentDataLine.length;i++){
+                                            currentDataLine[i] = removeQuotes(currentDataLine[i]);
+                                        }
+
+                                        if(currentRelation.equalsIgnoreCase("repositories")){
+                                            repos.add(new RepoInfo(
+                                                    currentDataLine[0],
+                                                    currentDataLine[1],
+                                                    currentDataLine[2],
+                                                    currentDataLine[3],
+                                                    currentDataLine[4],
+                                                    currentDataLine[5],
+                                                    currentDataLine[6],
+                                                    currentDataLine[7],
+                                                    currentDataLine[8],
+                                                    parseBool(currentDataLine[9]),
+                                                    currentDataLine[10],
+                                                    parseBool(currentDataLine[11]),
+                                                    parseBool(currentDataLine[12]),
+                                                    parseBool(currentDataLine[13]),
+                                                    parseBool(currentDataLine[14]),
+                                                    parseBool(currentDataLine[15]),
+                                                    Integer.valueOf(currentDataLine[16]),
+                                                    Integer.valueOf(currentDataLine[17]),
+                                                    Integer.valueOf(currentDataLine[18]),
+                                                    Integer.valueOf(currentDataLine[19]),
+                                                    Integer.valueOf(currentDataLine[20]),
+                                                    Integer.valueOf(currentDataLine[21]),
+                                                    Integer.valueOf(currentDataLine[22]),
+                                                    Integer.valueOf(currentDataLine[23]),
+                                                    Integer.valueOf(currentDataLine[24]),
+                                                    tempLanguages,
+                                                    currentDataLine[25]
+                                            ));
+                                        }else if(currentRelation.equalsIgnoreCase("languages")){
+                                            for(RepoInfo r : repos){
+                                                if(Objects.equals(r.getId(), currentDataLine[0])){
+                                                    r.addLanguage(new LanguageInfo(
+                                                            currentDataLine[1],
+                                                            Integer.valueOf(currentDataLine[2] )
+                                                    ));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                        }
+                    }catch(IOException e){
+                        System.out.println(e);
                     }
                 }catch(IOException e){
                     System.out.println(e);
                 }
-            }catch(IOException e){
-                System.out.println(e);
             }
+        }catch(java.security.NoSuchAlgorithmException ex){
+            System.out.println("[ERROR] "+ex);
         }
+
         return repos;
     }
 
@@ -279,6 +352,19 @@ public class RGDS {
             }
         }
         return false;
+    }
+
+    private String removeQuotes(String in){
+        return in.replaceAll("^\"|\"$", "");
+    }
+
+    private Boolean parseBool(String in){
+        return in.equalsIgnoreCase("t");
+    }
+
+    public Boolean close(){
+        db.close();
+        return true;
     }
 }
 

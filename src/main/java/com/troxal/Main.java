@@ -177,7 +177,7 @@ public class Main {
                                 readFileName = fileInput.nextLine();
                                 readFileName = readFileName.replaceAll("[\\\\/:*?\"<>|]", "_");
                             }
-                            rgds.read(true,readFileName);
+                            System.out.println(rgds.read(true,readFileName).get(1));
                         default:
                             System.out.println("Invalid choice!");
                             break;

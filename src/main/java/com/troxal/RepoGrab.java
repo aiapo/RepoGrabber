@@ -50,7 +50,7 @@ public class RepoGrab {
         getRepos(null);
     }
 
-    // Import CSV constructor
+    // Import CSV/DB constructor
     public RepoGrab(Boolean headless,Boolean fromDB){
         this.db = new Manager().access();
 

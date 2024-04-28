@@ -268,6 +268,7 @@ public class RepoInfo implements Serializable {
     public List<LanguageInfo> getLanguages(){
         return languages;
     }
+    public Boolean addLanguage(LanguageInfo language){ return languages.add(language); }
 
     // Set/Get branchName
     public void setBranchName(String branchName){
