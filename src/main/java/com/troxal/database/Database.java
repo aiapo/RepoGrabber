@@ -138,15 +138,29 @@ public class Database implements AutoCloseable{
         return this.select(table, columns, "", null);
     }
 
+    // Overloaded select with no conditions and a limit
+    public ResultSet select(String table, Object[] columns,Integer limit) throws SQLException{
+        return this.select(table, columns, "", null,limit);
+    }
+
     // Select tuple(s) based on condition (specify "MAX") in condition to select the max.
-    public ResultSet select(String table, Object[] columns, String condition, Object[] params) throws SQLException {
+    public ResultSet select(String table, Object[] columns, String condition, Object[] params) throws SQLException{
+        return this.select(table, columns, condition, params,null);
+    }
+
+    // Select tuple(s)
+    public ResultSet select(String table, Object[] columns, String condition, Object[] params,Integer limit) throws SQLException {
         query = new QueryBuilder();
-        if (condition.equals(""))
+        if (condition.isEmpty()&&limit==null)
             query.select(columns).from(table);
+        else if(condition.isEmpty())
+            query.select(columns).from(table).limit(limit);
         else if(condition.equals("MAX"))
             query.max(columns).from(table);
-        else
+        else if(limit==null)
             query.select(columns).from(table).where(condition);
+        else
+            query.select(columns).from(table).where(condition).limit(limit);
 
         PreparedStatement ps = connection.prepareStatement(query.stringifyQuery());
         if(params != null){

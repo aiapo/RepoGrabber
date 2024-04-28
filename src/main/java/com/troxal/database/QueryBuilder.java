@@ -35,6 +35,13 @@ public class QueryBuilder {
         return this;
     }
 
+    // Adds limit(s)
+    public QueryBuilder limit(Integer limit){
+        query.append(" LIMIT ");
+        query.append(limit);
+        return this;
+    }
+
     // Adds attribute(s)
     public QueryBuilder attributes(Object[] params){
         query.append(" (");

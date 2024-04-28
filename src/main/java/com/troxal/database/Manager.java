@@ -27,12 +27,14 @@ public class Manager{
     public void init(){
             DB.create(
                 "Runs", new Object[]{
+                        "rid    SERIAL",
                         "ID  INTEGER    PRIMARY KEY",
                         "NAME   VARCHAR    NOT NULL",
                         "RUNDATE   VARCHAR    NOT NULL"
                 });
             DB.create(
                 "Repositories", new Object[]{
+                        "rid    SERIAL",
                         "ID VARCHAR PRIMARY KEY",
                         "NAME   VARCHAR  NOT NULL",
                         "OWNER  VARCHAR NOT NULL",
@@ -64,11 +66,13 @@ public class Manager{
                 });
             DB.create(
                 "RepositoryStatus", new Object[]{
+                        "rid    SERIAL",
                         "ID  VARCHAR    PRIMARY KEY",
                         "STATUS   INTEGER    NOT NULL"
                 });
             DB.create(
                 "Languages", new Object[]{
+                        "rid    SERIAL",
                         "REPOID   VARCHAR    NOT NULL",
                         "NAME   VARCHAR    NOT NULL",
                         "SIZE   INTEGER    NOT NULL",
@@ -76,11 +80,13 @@ public class Manager{
                 });
             DB.create(
                 "CommitStatus", new Object[]{
+                        "rid    SERIAL",
                         "ID  VARCHAR    PRIMARY KEY",
                         "STATUS   INTEGER    NOT NULL"
                 });
             DB.create(
                     "Refactorings", new Object[]{
+                            "rid    SERIAL",
                             "refactoringhash    VARCHAR NOT NULL",
                             "commit    VARCHAR NOT NULL",
                             "gituri  VARCHAR    NOT NULL",
@@ -109,6 +115,7 @@ public class Manager{
                     });
             DB.create(
                     "Imports", new Object[]{
+                            "rid    SERIAL",
                             "RGDSHASH   VARCHAR NOT NULL",
                             "PRIMARY KEY(RGDSHASH)"
                     }

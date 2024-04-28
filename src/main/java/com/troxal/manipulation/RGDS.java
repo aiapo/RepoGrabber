@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -89,48 +91,71 @@ public class RGDS {
     }
 
     private void getFromDB(GZIPOutputStream gos,Map.Entry<String,String[]> relation){
-        String[] attributes = relation.getValue();
+        try(ExecutorService dbExecutor = Executors.newFixedThreadPool(100)){
+            String[] attributes = relation.getValue();
+            Integer maxId = 0;
+            Integer maxChunk = 10000;
 
-        try{
-            gos.write("@DATA\n".getBytes());
-        }catch(IOException e){
-            System.out.println(e);
-        }
+            try{
+                gos.write("@DATA\n".getBytes());
+            }catch(IOException e){
+                System.out.println(e);
+            }
 
-        try(ResultSet repos = db.select(relation.getKey(),new String[]{"*"})){
-            while(repos.next()){
-                List<String> tempLine = new ArrayList<>();
-                for(int i=0;i<attributes.length;i++){
-                    String attributeName = attributes[i].split(",")[0].toLowerCase();
-                    if(!attributeName.isBlank()){
-                        if(hasColumn(repos,attributeName))
-                            if(repos.getString(attributeName)!=null)
-                                tempLine.add(repos.getString(attributeName).replaceAll("[\\t\\n\\r]+"," "));
-                            else
-                                tempLine.add("");
-                        else{
-                            ResultSetMetaData rsmd = repos.getMetaData();
-                            for(int x = 1; x <= rsmd.getColumnCount(); x++){
-                                System.out.println(rsmd.getColumnName(x)+" v "+attributeName);
+            try(ResultSet max = db.select(relation.getKey(),new String[]{"rid"},"MAX",new Object[]{})){
+                if(max.next())
+                    maxId = max.getInt("max_id");
+            }catch(SQLException ex){
+                System.out.println("[ERROR] SQL: "+ex);
+            }
+
+            for(int i=0; i<maxId; i+=maxChunk){
+                int finalI = i;
+                dbExecutor.submit(()->{
+                    try(ResultSet repos = db.select(relation.getKey(),new String[]{"*"},"rid > ?",new Object[]{finalI},
+                            maxChunk)){
+                        while(repos.next()){
+                            List<String> tempLine = new ArrayList<>();
+                            for(int j=0;j<attributes.length;j++){
+                                String attributeName = attributes[j].split(",")[0].toLowerCase();
+                                if(!attributeName.isBlank()){
+                                    if(hasColumn(repos,attributeName))
+                                        if(repos.getString(attributeName)!=null)
+                                            tempLine.add(repos.getString(attributeName).replaceAll("[\\t\\n\\r]+"," "));
+                                        else
+                                            tempLine.add("");
+                                    else{
+                                        ResultSetMetaData rsmd = repos.getMetaData();
+                                        for(int x = 1; x <= rsmd.getColumnCount(); x++){
+                                            System.out.println(rsmd.getColumnName(x)+" v "+attributeName);
+                                        }
+                                    }
+                                }
+                            }
+
+                            try{
+                                gos.write(dataRowFormat(tempLine));
+                            }catch(IOException e){
+                                System.out.println(e);
                             }
                         }
+                    } catch (SQLException e) {
+                        System.out.println("[ERROR] SQL Exception: "+e+" (getFromDB [RGDS.java])");
                     }
-                }
-
-                try{
-                    gos.write(dataRowFormat(tempLine));
-                }catch(IOException e){
-                    System.out.println(e);
-                }
+                });
             }
-        } catch (SQLException e) {
-            System.out.println("[ERROR] SQL Exception: "+e+" (getFromDB [RGDS.java])");
-        }
 
-        try{
-            gos.write("\n".getBytes());
-        }catch(IOException e){
-            System.out.println(e);
+            try{
+                gos.write("\n".getBytes());
+            }catch(IOException e){
+                System.out.println(e);
+            }
+
+            // Shut down threads
+            dbExecutor.shutdown();
+            // Wait for all threads to terminate
+            while (!dbExecutor.isTerminated()) {
+            }
         }
     }
 
@@ -333,6 +358,8 @@ public class RGDS {
                 }catch(IOException e){
                     System.out.println(e);
                 }
+            }else{
+                System.out.println("[ERROR] Only compressed RGDS is supported at this time.");
             }
         }catch(java.security.NoSuchAlgorithmException ex){
             System.out.println("[ERROR] "+ex);
