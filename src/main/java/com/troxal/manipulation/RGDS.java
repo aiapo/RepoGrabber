@@ -2,34 +2,22 @@ package com.troxal.manipulation;
 
 import com.troxal.database.Database;
 import com.troxal.database.Manager;
+import com.troxal.pojo.RepoInfo;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class RGDS {
     String comment = "\n% ";
     String RGDS_Version = "1.0.0";
+    Database db = new Manager().access();
 
-    public RGDS(Boolean headless){
-        String fileName;
-
-        if(!headless){
-            //Allows user to input filename for CSV and fixes any illegal characters
-            System.out.println("Enter a name for the file here: ");
-            Scanner fileInput = new Scanner(System.in);
-            fileName = fileInput.nextLine();
-            fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
-        }else{
-            fileName="dataset";
-        }
-
-        create(fileName);
+    public RGDS(){
     }
 
     private byte[] createHeader(String title, String description){
@@ -99,7 +87,6 @@ public class RGDS {
 
     private void getFromDB(GZIPOutputStream gos,Map.Entry<String,String[]> relation){
         String[] attributes = relation.getValue();
-        Database db = new Manager().access();
 
         try{
             gos.write("@DATA\n".getBytes());
@@ -123,9 +110,7 @@ public class RGDS {
                             for(int x = 1; x <= rsmd.getColumnCount(); x++){
                                 System.out.println(rsmd.getColumnName(x)+" v "+attributeName);
                             }
-
                         }
-
                     }
                 }
 
@@ -147,23 +132,7 @@ public class RGDS {
         }
     }
 
-    private void writeCompressed(String fileName, byte[] header, Map<String,String[]> relations) {
-        new File("./results").mkdirs();
-        File file = new File("results/"+ fileName + ".rgds");
-
-
-        try (GZIPOutputStream gos = new GZIPOutputStream(new FileOutputStream(file))){
-            gos.write(header);
-            for(Map.Entry<String,String[]> relation : relations.entrySet()){
-                gos.write(createRelation("Repositories",relation.getValue()));
-                getFromDB(gos,relation);
-            }
-        }catch(IOException e){
-            System.out.println(e);
-        }
-    }
-
-    private void create(String fileName){
+    public Boolean write(Boolean compressed, String fileName) {
         byte[] header = createHeader("Example dataset","This dataset is for the purposes of testing " +
                 "the RGDS format, and the RepoGrabberGrapher Tool.");
 
@@ -217,7 +186,7 @@ public class RGDS {
                 "leftEndColumn,INTEGER",
                 "leftFilePath,VARCHAR",
                 "leftCodeElementType,VARCHAR",
-                "leftDescription,TEXT ",
+                "leftDescription,TEXT",
                 "leftcodeelement,VARCHAR",
                 "rightStartLine,INTEGER",
                 "rightEndLine,INTEGER",
@@ -232,10 +201,76 @@ public class RGDS {
                 "commitdate,TIMESTAMP"}
         );
 
-        writeCompressed(fileName,header,relations);
+        if(compressed){
+            new File("./results").mkdirs();
+            File file = new File("results/"+ fileName + ".rgds");
+
+
+            try (GZIPOutputStream gos = new GZIPOutputStream(new FileOutputStream(file))){
+                gos.write(header);
+                for(Map.Entry<String,String[]> relation : relations.entrySet()){
+                    gos.write(createRelation("Repositories",relation.getValue()));
+                    getFromDB(gos,relation);
+                }
+                return true;
+            }catch(IOException e){
+                System.out.println(e);
+            }
+        }else{
+            System.out.println("[ERROR] Only compressed RGDS is supported at this time.");
+        }
+        return false;
     }
 
-    public Boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+    public List<RepoInfo> read(Boolean compressed, String fileName){
+        List<RepoInfo> repos = new ArrayList<>();
+
+        Map<String,Integer> validAction = new HashMap<>();
+        validAction.put("rgds_version",1);
+        validAction.put("title",1);
+        validAction.put("relation",1);
+        validAction.put("attribute",2);
+        validAction.put("data",0);
+
+        if(compressed){
+            try(InputStream fileStream = new FileInputStream("results/"+fileName+".rgds")){
+                try(InputStream gzipStream = new GZIPInputStream(fileStream)){
+                    Reader decoder = new InputStreamReader(gzipStream);
+                    BufferedReader buffered = new BufferedReader(decoder);
+
+                    String currentAction = "";
+
+                    while (buffered.ready()) {
+                        String currentLine = buffered.readLine();
+                        if(!currentLine.startsWith("%"))
+                            if(currentLine.startsWith("@")){
+                                String[] currentActionFull = currentLine.substring(1).split(" (?=(?:[^\"]*\"[^\"]*\")" +
+                                        "*[^\"]*$)", -1);;
+                                currentAction = currentActionFull[0].toLowerCase();
+                                if(validAction.containsKey(currentAction)){
+                                    if(validAction.get(currentAction)==currentActionFull.length-1){
+                                        System.out.println("The @Action \""+currentAction+"\" has the correct number " +
+                                                "of parameters at "+validAction.get(currentAction));
+                                    }else
+                                        System.out.println("[ERROR] Invalid number of parameters for @Action " +
+                                                "\""+currentAction+"\" in RGDS file, ignoring... :: "+
+                                                Arrays.toString(currentActionFull));
+                                }else
+                                    System.out.println("[ERROR] Invalid @Action in RGDS file, ignoring...");
+
+                            }
+                    }
+                }catch(IOException e){
+                    System.out.println(e);
+                }
+            }catch(IOException e){
+                System.out.println(e);
+            }
+        }
+        return repos;
+    }
+
+    private Boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
         int columns = rsmd.getColumnCount();
         for (int x = 1; x <= columns; x++) {
