@@ -23,7 +23,8 @@ public class Main {
             Integer menuChoice = 0;
             Boolean headless=false;
             RepoGrab rg;
-            String importCSV = "", languages = "", sDate = "", menuOrder = "", endDate = "",
+            RGDS rgds = new RGDS();
+            String importCSV = "",importDB = "", languages = "", sDate = "", menuOrder = "", endDate = "",
                     errorInt = "Please enter a number.", errorString = "Please enter a valid String", errorYN =
                     "Please enter 'y' or 'n'";
             Integer followers = 0, users = 0, percentLanguage = 0, totalCommit = 0, minTotalSize = 0, maxTotalSize =
@@ -44,6 +45,7 @@ public class Main {
 
                 if (args.length > 0 && args[0].equals("headless")) {
                     importCSV = Config.get("IMPORT_CSV");
+                    importDB = Config.get("IMPORT_DB");
                     languages = Config.get("LANGUAGE_WANTED");
                     sDate = Config.get("START_CREATEDATE");
                     endDate = Config.get("END_CREATEDATE");
@@ -58,38 +60,43 @@ public class Main {
                 } else {
                    Scanner scn = new Scanner(System.in);
 
-                   String importPrompt = "Do you want to import a CSV to skip the GitHub search? (y/n): ";
-                   importCSV = paramGetterYN(importPrompt,errorYN,scn);
+                   String dbImportPrompt = "Do you want to import from the DB to skip the GitHub search? (y/n): ";
+                   importDB = paramGetterYN(dbImportPrompt,errorYN,scn);
 
-                    if (importCSV.equalsIgnoreCase("n")) {
-                        String followPrompt = "What is the minimum amount of followers on project wanted? (ex: '50'): ";
-                        followers = paramGetterInt(followPrompt,errorInt,scn);
+                   if(importDB.equalsIgnoreCase("n")){
+                       String importPrompt = "Do you want to import a CSV to skip the GitHub search? (y/n): ";
+                       importCSV = paramGetterYN(importPrompt,errorYN,scn);
 
-                        String langPrompt = "What language do you want to grab? (ex: 'java'): ";
-                        languages = paramGetterString(langPrompt,errorString,scn);
+                       if (importCSV.equalsIgnoreCase("n")) {
+                           String followPrompt = "What is the minimum amount of followers on project wanted? (ex: '50'): ";
+                           followers = paramGetterInt(followPrompt,errorInt,scn);
 
-                        String committerPrompt = "What is the minimum amount of commit users wanted? (ex: '2'): ";
-                        users = paramGetterInt(committerPrompt,errorInt,scn);
+                           String langPrompt = "What language do you want to grab? (ex: 'java'): ";
+                           languages = paramGetterString(langPrompt,errorString,scn);
 
-                        String percentPrompt = "What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ";
-                        percentLanguage = paramGetterInt(percentPrompt,errorInt,scn);
+                           String committerPrompt = "What is the minimum amount of commit users wanted? (ex: '2'): ";
+                           users = paramGetterInt(committerPrompt,errorInt,scn);
 
-                        String commitPrompt = "What is minimum amount of commits wanted? (ex. '300'): ";
-                        totalCommit = paramGetterInt(commitPrompt, errorInt,scn);
+                           String percentPrompt = "What is the percentage of the language in the repo wanted? (ex. '51' means at >=51% is language): ";
+                           percentLanguage = paramGetterInt(percentPrompt,errorInt,scn);
 
-                        String minSizePrompt = "What is minimum size in kilobytes of repo wanted? (ex. '5000'): ";
-                        minTotalSize = paramGetterInt(minSizePrompt,errorInt,scn);
+                           String commitPrompt = "What is minimum amount of commits wanted? (ex. '300'): ";
+                           totalCommit = paramGetterInt(commitPrompt, errorInt,scn);
 
-                        String maxSizePrompt = "What is the maximum size in kilobytes of repo wanted? (ex. 5000000): ";
-                        maxTotalSize = paramGetterInt(maxSizePrompt,errorInt,scn);
+                           String minSizePrompt = "What is minimum size in kilobytes of repo wanted? (ex. '5000'): ";
+                           minTotalSize = paramGetterInt(minSizePrompt,errorInt,scn);
 
-                        String startPrompt = "What is start date of repos wanted? (ex. '2010-01-01'): ";
-                        sDate = paramGetterString(startPrompt,errorString,scn);
+                           String maxSizePrompt = "What is the maximum size in kilobytes of repo wanted? (ex. 5000000): ";
+                           maxTotalSize = paramGetterInt(maxSizePrompt,errorInt,scn);
 
-                        String endPrompt = "What is end date of repos wanted? (ex. '2010-01-01'): ";
-                        endDate = paramGetterString(endPrompt,errorString,scn);
+                           String startPrompt = "What is start date of repos wanted? (ex. '2010-01-01'): ";
+                           sDate = paramGetterString(startPrompt,errorString,scn);
 
-                    }
+                           String endPrompt = "What is end date of repos wanted? (ex. '2010-01-01'): ";
+                           endDate = paramGetterString(endPrompt,errorString,scn);
+
+                       }
+                   }
                 }
 
                 System.out.println("\n** Grabbing repos!");
@@ -97,7 +104,11 @@ public class Main {
                     rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, minTotalSize,
                             maxTotalSize, sDate, endDate);
                 } else {
-                    rg = new RepoGrab(headless);
+                    Boolean importFromDB = false;
+                    if(importDB.equalsIgnoreCase("y"))
+                        importFromDB = true;
+
+                    rg = new RepoGrab(headless,importFromDB);
                 }
                 System.out.println("\n** Grabbed repos!");
 
@@ -145,8 +156,28 @@ public class Main {
                             new GitChanges(rg);
                             break;
                         case 7:
-                            new RGDS(headless);
+                            String fileName = "dataset";
+                            if(!headless){
+                                System.out.println("Enter a name for the file here: ");
+                                Scanner fileInput = new Scanner(System.in);
+                                fileName = fileInput.nextLine();
+                                fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+                            }
+
+                            if(rgds.write(true,fileName))
+                                System.out.println("Successfully created the RGDS \""+fileName+"\"!");
+                            else
+                                System.out.println("There was an issue creating the RGDS \""+fileName+"\"! Try again.");
                             break;
+                        case 9:
+                            String readFileName = "dataset";
+                            if(!headless){
+                                System.out.println("Enter a name for the file here: ");
+                                Scanner fileInput = new Scanner(System.in);
+                                readFileName = fileInput.nextLine();
+                                readFileName = readFileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+                            }
+                            rgds.read(true,readFileName);
                         default:
                             System.out.println("Invalid choice!");
                             break;

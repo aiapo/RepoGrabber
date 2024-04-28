@@ -12,15 +12,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class CSV {
     // Create CSV of all repos
@@ -128,8 +124,6 @@ public class CSV {
 
             // Use csvReader to read in CSV
             List<String[]> csvData = reader.readAll();
-
-            System.out.println("Imported "+csvData.size()+" repos!");
 
             // Read all rows of the CSV
             for (int i=0;i<csvData.size();i++) {

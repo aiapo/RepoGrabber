@@ -10,6 +10,7 @@ import com.troxal.pojo.RepoInfo;
 import com.troxal.request.GitHub;
 import com.troxal.request.Mapper;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -50,9 +51,15 @@ public class RepoGrab {
     }
 
     // Import CSV constructor
-    public RepoGrab(Boolean headless){
+    public RepoGrab(Boolean headless,Boolean fromDB){
         this.db = new Manager().access();
-        repoCollection = new HashSet<>(CSV.read(headless));
+
+        if(fromDB)
+            repoCollection = new HashSet<>(getFromDB());
+        else
+            repoCollection = new HashSet<>(CSV.read(headless));
+
+        System.out.println("Imported "+repoCollection.size()+" repos!");
     }
 
     // Easy GraphQL variable generator
@@ -205,14 +212,6 @@ public class RepoGrab {
                     }
                 }
 
-                //try {
-                    // Wait 3 seconds each query to reduce API limits
-                    //System.out.println("[INFO] Wait 3 seconds...");
-                    //TimeUnit.SECONDS.sleep(3);
-                //} catch (InterruptedException e) {
-                   // System.out.println("[ERROR] Error trying to wait: \n"+e);
-                //}
-
                 // While there is a next page AND you still have at least 100 API calls left
                 if(repoData.getSearch().getPageInfo().getHasNextPage()&&repoData.getRateLimit().getRemaining()>100){
                     // Print status on cursor/remaining API
@@ -240,7 +239,9 @@ public class RepoGrab {
     }
 
     // Get all repos
-    public List<RepoInfo> getRepos(){return repoCollection.stream().toList();}
+    public List<RepoInfo> getRepos(){
+        return repoCollection.stream().toList();
+    }
 
     // Get a single repo's data
     public RepoInfo getRepo(Integer id){return getRepos().get(id);}
@@ -380,5 +381,68 @@ public class RepoGrab {
             else
                 System.out.println("[ERROR] Failed to add "+repo.getLanguages().get(j).getName()+" to "+repo.getName());
         }
+    }
+
+    private List<RepoInfo> getFromDB(){
+        List<RepoInfo> repositories = new ArrayList<>();
+        try(ResultSet repos = db.select("Repositories",new String[]{"*"})){
+            while(repos.next()){
+                try {
+                    List<LanguageInfo> languageList = new ArrayList<>();
+                    try(ResultSet lang = db.select("Languages",new String[]{"*"},"repoid = ?",
+                            new Object[]{repos.getString("id")})){
+                        while(lang.next()){
+                            languageList.add(
+                                    new LanguageInfo(
+                                            lang.getString("name"),
+                                            lang.getInt("size")
+                                    )
+                            );
+                        }
+                    }catch(SQLException ex){
+                        System.out.println("[ERROR] Error getting languages from db: "+ex);
+                    }
+                    repositories.add(
+                            new RepoInfo(
+                                    repos.getString("id"),
+                                    repos.getString("name"),
+                                    repos.getString("owner"),
+                                    repos.getString("url"),
+                                    repos.getString("description"),
+                                    repos.getString("primarylanguage"),
+                                    repos.getString("creationdate"),
+                                    repos.getString("updatedate"),
+                                    repos.getString("pushdate"),
+                                    repos.getBoolean("isarchived"),
+                                    repos.getString("archivedat"),
+                                    repos.getBoolean("isforked"),
+                                    repos.getBoolean("isempty"),
+                                    repos.getBoolean("islocked"),
+                                    repos.getBoolean("isdisabled"),
+                                    repos.getBoolean("istemplate"),
+                                    repos.getInt("totalissueusers"),
+                                    repos.getInt("totalmentionableusers"),
+                                    repos.getInt("totalcommittercount"),
+                                    repos.getInt("totalprojectsize"),
+                                    repos.getInt("totalcommits"),
+                                    repos.getInt("issuecount"),
+                                    repos.getInt("forkcount"),
+                                    repos.getInt("starcount"),
+                                    repos.getInt("watchcount"),
+                                    languageList,
+                                    repos.getString("branchname")
+                            )
+                    );
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }catch(SQLException ex){
+            System.out.println("[ERROR] Error getting repositories from db: "+ex);
+        }
+
+
+
+        return repositories;
     }
 }
