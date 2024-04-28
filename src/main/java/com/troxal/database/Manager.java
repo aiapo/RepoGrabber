@@ -59,7 +59,8 @@ public class Manager{
                         "STARCOUNT INTEGER NOT NULL",
                         "WATCHCOUNT INTEGER NOT NULL",
                         "BRANCHNAME VARCHAR NOT NULL",
-                        "README TEXT"
+                        "README TEXT",
+                        "DOMAIN VARCHAR"
                 });
             DB.create(
                 "RepositoryStatus", new Object[]{

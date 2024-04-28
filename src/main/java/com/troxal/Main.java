@@ -4,6 +4,8 @@ import com.troxal.database.Manager;
 import com.troxal.jobs.RefMiner;
 import com.troxal.manipulation.CSV;
 import com.troxal.manipulation.Clone;
+import com.troxal.manipulation.GitChanges;
+import com.troxal.manipulation.RGDS;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -99,7 +101,7 @@ public class Main {
                 }
                 System.out.println("\n** Grabbed repos!");
 
-                while (menuChoice != 5 && menuChoice != 6) {
+                while (menuChoice != 5 && menuChoice != 8) {
                     if (menuOrder.equals("")) {
 
                         System.out.println("** Menu: **" +
@@ -108,7 +110,9 @@ public class Main {
                                 "\n 3. Export to CSV" +
                                 "\n 4. Run RefMiner" +
                                 "\n 5. New Query" +
-                                "\n 6. Exit\n");
+                                "\n 6. Move Field Additional Analysis" +
+                                "\n 7. Export to RGDS (RepoGrabberDataSet)" +
+                                "\n 8. Exit\n");
                         System.out.println("Choice: ");
                         Scanner scn = new Scanner(System.in);
                         menuChoice = Integer.valueOf(scn.next());
@@ -133,10 +137,15 @@ public class Main {
                             break;
                         case 4:
                             RefMiner.runJobs(rg);
+                            break;
                         case 5:
+                            newQuery = false;
                             break;
                         case 6:
-                            newQuery = false;
+                            new GitChanges(rg);
+                            break;
+                        case 7:
+                            new RGDS(headless);
                             break;
                         default:
                             System.out.println("Invalid choice!");
