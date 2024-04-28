@@ -150,7 +150,6 @@ public class Main {
                             RefMiner.runJobs(rg);
                             break;
                         case 5:
-                            newQuery = false;
                             break;
                         case 6:
                             new GitChanges(rg);
@@ -168,6 +167,9 @@ public class Main {
                                 System.out.println("Successfully created the RGDS \""+fileName+"\"!");
                             else
                                 System.out.println("There was an issue creating the RGDS \""+fileName+"\"! Try again.");
+                            break;
+                        case 8:
+                            newQuery = false;
                             break;
                         case 9:
                             String readFileName = "dataset";
