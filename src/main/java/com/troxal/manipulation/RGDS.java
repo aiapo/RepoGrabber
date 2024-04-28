@@ -67,8 +67,6 @@ public class RGDS {
                     .append("\n");
         }
 
-        sb.append("\n");
-
         return sb.toString().getBytes();
     }
 
@@ -107,7 +105,7 @@ public class RGDS {
                     if(!attributeName.isBlank()){
                         if(hasColumn(repos,attributeName))
                             if(repos.getString(attributeName)!=null)
-                                tempLine.add(repos.getString(attributeName));
+                                tempLine.add(repos.getString(attributeName).replaceAll("[\\t\\n\\r]+"," "));
                             else
                                 tempLine.add("");
                         else{
