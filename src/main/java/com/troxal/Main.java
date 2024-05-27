@@ -156,14 +156,20 @@ public class Main {
                             break;
                         case 7:
                             String fileName = "dataset";
+                            String title = fileName;
+                            String description = "A refactoring dataset from the tool RepoGrabber";
                             if(!headless){
-                                System.out.println("Enter a name for the file here: ");
+                                System.out.println("Enter a name for the dataset here: ");
                                 Scanner fileInput = new Scanner(System.in);
                                 fileName = fileInput.nextLine();
                                 fileName = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+                                System.out.println("Enter a title for the dataset here: ");
+                                Scanner titleInput = new Scanner(System.in);
+                                title = titleInput.nextLine();
                             }
 
-                            if(rgds.write(true,fileName))
+                            if(rgds.write(true,fileName,title,description))
                                 System.out.println("Successfully created the RGDS \""+fileName+"\"!");
                             else
                                 System.out.println("There was an issue creating the RGDS \""+fileName+"\"! Try again.");
@@ -185,6 +191,7 @@ public class Main {
                             break;
                     }
                 }
+                rgds.close();
             }
     }
     // Uses given file name to create a txt file for query metadata

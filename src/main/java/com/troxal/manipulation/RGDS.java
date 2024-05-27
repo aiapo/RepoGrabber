@@ -110,6 +110,7 @@ public class RGDS {
             }
 
             for(int i=0; i<maxId; i+=maxChunk){
+                System.out.println("[INFO] Currently "+i+"/"+maxId+" for relation "+relation.getKey());
                 int finalI = i;
                 dbExecutor.submit(()->{
                     try(ResultSet repos = db.select(relation.getKey(),new String[]{"*"},"rid > ?",new Object[]{finalI},
@@ -159,9 +160,8 @@ public class RGDS {
         }
     }
 
-    public Boolean write(Boolean compressed, String fileName) {
-        byte[] header = createHeader("Example dataset","This dataset is for the purposes of testing " +
-                "the RGDS format, and the RepoGrabberGrapher Tool.");
+    public Boolean write(Boolean compressed, String fileName, String title, String description) {
+        byte[] header = createHeader(title,description);
 
         Map<String,String[]> relations = new HashMap<>();
 
@@ -231,8 +231,6 @@ public class RGDS {
         if(compressed){
             new File("./results").mkdirs();
             File file = new File("results/"+ fileName + ".rgds");
-
-
             try (GZIPOutputStream gos = new GZIPOutputStream(new FileOutputStream(file))){
                 gos.write(header);
                 for(Map.Entry<String,String[]> relation : relations.entrySet()){
