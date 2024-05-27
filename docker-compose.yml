@@ -1,0 +1,14 @@
+name: repograb
+services:
+  repograbber:
+    container_name: repograbber
+    volumes:
+      - /yourconfigdir:/config
+      - /yourreposdir:/repos
+      - /yourresultsdir:/results
+    image: repograbber
+  postgres:
+    container_name: rg-postgres
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+    image: postgres
