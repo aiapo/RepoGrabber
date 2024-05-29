@@ -223,6 +223,7 @@ public class RefMine implements Runnable, Serializable {
                                         return true;
                                     } catch (Exception e) {
                                         System.out.println("[ERROR] "+id+": " +e+" (call [RefMine.java])");
+                                        Thread.currentThread().interrupt();
                                         return false;
                                     }
                                 }
@@ -231,6 +232,7 @@ public class RefMine implements Runnable, Serializable {
                         System.out.println(String.format("[ERROR] Ignored revision %s due to error %s",
                                 currentCommit.getId().getName(),e));
                         handler.handleException(currentCommit.getId().getName(),e);
+                        Thread.currentThread().interrupt();
                     }
                 }
                 cStatus.close();
