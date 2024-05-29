@@ -337,36 +337,37 @@ public class RepoGrab {
     }
 
     public void addToDB(RepoInfo repo){
-        Object[] newRepo = {
-                null,
-                repo.getId(),
-                repo.getName(),
-                repo.getOwner(),
-                repo.getUrl(),
-                repo.getDescription(),
-                repo.getPrimaryLanguage(),
-                repo.getCreationDate(),
-                repo.getUpdateDate(),
-                repo.getPushDate(),
-                repo.getIsArchived(),
-                repo.getArchivedAt(),
-                repo.getIsFork(),
-                repo.getIsEmpty(),
-                repo.getIsLocked(),
-                repo.getIsDisabled(),
-                repo.getIsTemplate(),
-                repo.getTotalIssueUsers(),
-                repo.getTotalMentionableUsers(),
-                repo.getTotalCommitterCount(),
-                repo.getTotalProjectSize(),
-                repo.getTotalCommits(),
-                repo.getIssueCount(),
-                repo.getForkCount(),
-                repo.getStarCount(),
-                repo.getWatchCount(),
-                repo.getBranchName()
-        };
-        if(db.insert("Repositories",newRepo))
+        List<Object[]> a = new ArrayList<>();
+        a.add(new Object[]{
+            repo.getId(),
+            repo.getName(),
+            repo.getOwner(),
+            repo.getUrl(),
+            repo.getDescription(),
+            repo.getPrimaryLanguage(),
+            repo.getCreationDate(),
+            repo.getUpdateDate(),
+            repo.getPushDate(),
+            repo.getIsArchived(),
+            repo.getArchivedAt(),
+            repo.getIsFork(),
+            repo.getIsEmpty(),
+            repo.getIsLocked(),
+            repo.getIsDisabled(),
+            repo.getIsTemplate(),
+            repo.getTotalIssueUsers(),
+            repo.getTotalMentionableUsers(),
+            repo.getTotalCommitterCount(),
+            repo.getTotalProjectSize(),
+            repo.getTotalCommits(),
+            repo.getIssueCount(),
+            repo.getForkCount(),
+            repo.getStarCount(),
+            repo.getWatchCount(),
+            repo.getBranchName()
+        });
+
+        if(db.insert("Repositories",a)!=null)
             System.out.println("[INFO] Added repo: "+repo.getName());
         else
             System.out.println("[ERROR] Failed to add repo: "+repo.getName());
