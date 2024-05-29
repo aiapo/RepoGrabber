@@ -27,14 +27,13 @@ public class Manager{
     public void init(){
             DB.create(
                 "Runs", new Object[]{
-                        "rid    SERIAL",
                         "ID  INTEGER    PRIMARY KEY",
                         "NAME   VARCHAR    NOT NULL",
-                        "RUNDATE   VARCHAR    NOT NULL"
+                        "RUNDATE   VARCHAR    NOT NULL",
+                        "rid    SERIAL"
                 });
             DB.create(
                 "Repositories", new Object[]{
-                        "rid    SERIAL",
                         "ID VARCHAR",
                         "NAME   VARCHAR  NOT NULL",
                         "OWNER  VARCHAR NOT NULL",
@@ -63,31 +62,32 @@ public class Manager{
                         "BRANCHNAME VARCHAR NOT NULL",
                         "README TEXT",
                         "DOMAIN VARCHAR",
+                        "rid    SERIAL",
                         "PRIMARY KEY (ID)"
                 });
             DB.create(
                 "RepositoryStatus", new Object[]{
-                        "rid    SERIAL",
                         "ID  VARCHAR    PRIMARY KEY",
-                        "STATUS   INTEGER    NOT NULL"
+                        "STATUS   INTEGER    NOT NULL",
+                        "rid    SERIAL"
+
                 });
             DB.create(
                 "Languages", new Object[]{
-                        "rid    SERIAL",
                         "REPOID   VARCHAR    NOT NULL",
                         "NAME   VARCHAR    NOT NULL",
                         "SIZE   INTEGER    NOT NULL",
+                        "rid    SERIAL",
                         "PRIMARY KEY (REPOID,NAME)"
                 });
             DB.create(
                 "CommitStatus", new Object[]{
-                        "rid    SERIAL",
                         "ID  VARCHAR    PRIMARY KEY",
-                        "STATUS   INTEGER    NOT NULL"
+                        "STATUS   INTEGER    NOT NULL",
+                        "rid    SERIAL"
                 });
             DB.create(
                     "Refactorings", new Object[]{
-                            "rid    SERIAL",
                             "refactoringhash    VARCHAR NOT NULL",
                             "commit    VARCHAR NOT NULL",
                             "gituri  VARCHAR    NOT NULL",
@@ -112,12 +112,13 @@ public class Manager{
                             "commitauthor    VARCHAR",
                             "commitmessage    VARCHAR",
                             "commitdate    TIMESTAMP",
+                            "rid    SERIAL",
                             "PRIMARY KEY (refactoringhash, commit, repositoryid)"
                     });
             DB.create(
                     "Imports", new Object[]{
-                            "rid    SERIAL",
                             "RGDSHASH   VARCHAR NOT NULL",
+                            "rid    SERIAL",
                             "PRIMARY KEY(RGDSHASH)"
                     }
             );
