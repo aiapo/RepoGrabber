@@ -338,6 +338,7 @@ public class RepoGrab {
 
     public void addToDB(RepoInfo repo){
         Object[] newRepo = {
+                null,
                 repo.getId(),
                 repo.getName(),
                 repo.getOwner(),
