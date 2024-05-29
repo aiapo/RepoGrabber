@@ -57,6 +57,8 @@ public class Main {
                     maxTotalSize = Integer.valueOf(Config.get("PROJECT_MAXTOTALSIZE"));
                     menuOrder = Config.get("MENU_ORDER");
                     headless = true;
+
+                    System.out.println("[DEBUG] Options selected: "+menuOrder);
                 } else {
                    Scanner scn = new Scanner(System.in);
 
@@ -113,7 +115,7 @@ public class Main {
                 System.out.println("\n** Grabbed repos!");
 
                 while (menuChoice != 5 && menuChoice != 8) {
-                    if (menuOrder.equals("")) {
+                    if (menuOrder.isEmpty()) {
                         System.out.println("** Menu: **" +
                                 "\n 1. Print all repos" +
                                 "\n 2. Clone all repos" +

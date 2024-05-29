@@ -339,6 +339,7 @@ public class RepoGrab {
     public void addToDB(RepoInfo repo){
         List<Object[]> a = new ArrayList<>();
         a.add(new Object[]{
+
             repo.getId(),
             repo.getName(),
             repo.getOwner(),
@@ -367,7 +368,7 @@ public class RepoGrab {
             repo.getBranchName()
         });
 
-        if(db.insert("Repositories",a)!=null)
+        if(db.insert("Repositories",a,new Object[]{"repoid", "name"})!=null)
             System.out.println("[INFO] Added repo: "+repo.getName());
         else
             System.out.println("[ERROR] Failed to add repo: "+repo.getName());

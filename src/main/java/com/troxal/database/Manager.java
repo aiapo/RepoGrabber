@@ -45,7 +45,7 @@ public class Manager{
                         "UPDATEDATE VARCHAR NOT NULL",
                         "PUSHDATE VARCHAR NOT NULL",
                         "ISARCHIVED BOOLEAN NOT NULL",
-                        "ARCHIVEDAT VARCHAR NOT NULL",
+                        "ARCHIVEDAT VARCHAR",
                         "ISFORKED BOOLEAN NOT NULL",
                         "ISEMPTY BOOLEAN NOT NULL",
                         "ISLOCKED BOOLEAN NOT NULL",
@@ -62,7 +62,8 @@ public class Manager{
                         "WATCHCOUNT INTEGER NOT NULL",
                         "BRANCHNAME VARCHAR NOT NULL",
                         "README TEXT",
-                        "DOMAIN VARCHAR"
+                        "DOMAIN VARCHAR",
+                        "PRIMARY KEY (ID)"
                 });
             DB.create(
                 "RepositoryStatus", new Object[]{
