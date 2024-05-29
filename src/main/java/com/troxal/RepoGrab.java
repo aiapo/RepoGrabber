@@ -368,7 +368,7 @@ public class RepoGrab {
             repo.getBranchName()
         });
 
-        if(db.insert("Repositories",a,new Object[]{"repoid", "name"})!=null)
+        if(db.insert("Repositories",a,new Object[]{"id", "name"})!=null)
             System.out.println("[INFO] Added repo: "+repo.getName());
         else
             System.out.println("[ERROR] Failed to add repo: "+repo.getName());
