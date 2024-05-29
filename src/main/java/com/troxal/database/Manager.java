@@ -35,7 +35,7 @@ public class Manager{
             DB.create(
                 "Repositories", new Object[]{
                         "rid    SERIAL",
-                        "ID VARCHAR PRIMARY KEY",
+                        "ID VARCHAR",
                         "NAME   VARCHAR  NOT NULL",
                         "OWNER  VARCHAR NOT NULL",
                         "URL    VARCHAR NOT NULL",
