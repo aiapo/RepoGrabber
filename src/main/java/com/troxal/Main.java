@@ -100,7 +100,7 @@ public class Main {
                 }
 
                 System.out.println("\n** Grabbing repos!");
-                if (importCSV.toLowerCase().equals("n")) {
+                if(importDB.toLowerCase().equals("n")&&importCSV.toLowerCase().equals("n")){
                     rg = new RepoGrab(followers, languages, users, percentLanguage, totalCommit, minTotalSize,
                             maxTotalSize, sDate, endDate);
                 } else {
@@ -114,7 +114,6 @@ public class Main {
 
                 while (menuChoice != 5 && menuChoice != 8) {
                     if (menuOrder.equals("")) {
-
                         System.out.println("** Menu: **" +
                                 "\n 1. Print all repos" +
                                 "\n 2. Clone all repos" +
